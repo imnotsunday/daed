@@ -148,10 +148,8 @@
     const activityId = params.get('activityId');
 
     async function loadResult() {
-      const detail = await fetch(`/activities/${activityId}`).then(res => res.json());
-      const result = await fetch(`/quiz/result?activityId=${activityId}`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-      }).then(res => res.json());
+      const detail = await apiGet(`/activity/${activityId}`);
+      const result = await apiGet(`/quiz-result?activityId=${activityId}`);
 
       document.getElementById('name').innerText = detail.name;
       document.getElementById('date').innerText = detail.eventDate;
@@ -168,10 +166,10 @@
       document.getElementById('score').innerText = `Result\n${result.correct} / ${result.total}`;
 
       const skills = document.getElementById('skills');
-      result.skills.forEach(s => {
+      (result.skills || []).forEach(skill => {
         const div = document.createElement('div');
-        div.className = 'tag ' + (s.pass ? 'pass' : 'fail');
-        div.innerHTML = `${s.name} ${s.pass ? '✔️' : '❌'}`;
+        div.className = 'tag pass';
+        div.innerHTML = `${skill} ✔️`;  // ✅ ถ้าเป็น string
         skills.appendChild(div);
       });
     }
