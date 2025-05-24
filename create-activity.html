@@ -160,47 +160,46 @@
     }
 
     document.getElementById("activityForm").onsubmit = async function(e) {
-      e.preventDefault();
-      const token = localStorage.getItem("token");
+  e.preventDefault();
+  const token = localStorage.getItem("token");
 
-      const name = document.getElementById("name").value;
-      const description = document.getElementById("description").value;
-      const date = document.getElementById("date").value;
-      const softSkills = document.getElementById("softSkills").value.split(',').map(s => s.trim());
-      const hardSkills = document.getElementById("hardSkills").value.split(',').map(s => s.trim());
+  const name = document.getElementById("name").value;
+  const description = document.getElementById("description").value;
+  const date = document.getElementById("date").value;
+  const softSkills = document.getElementById("softSkills").value.split(',').map(s => s.trim());
+  const hardSkills = document.getElementById("hardSkills").value.split(',').map(s => s.trim());
 
-      const quiz = [];
-      const container = document.getElementById("quizContainer");
-      for (let i = 0; i < container.children.length; i++) {
-        const item = container.children[i];
-        const q = item.querySelector(`[name='question${i}']`).value;
-        const c = item.querySelector(`[name='choices${i}']`).value.split(',').map(s => s.trim());
-        const a = item.querySelector(`[name='answer${i}']`).value.trim();
-        quiz.push({ question: q, choices: c, answer: a });
-      }
+  const quiz = [];
+  const container = document.getElementById("quizContainer");
+  for (let i = 0; i < container.children.length; i++) {
+    const item = container.children[i];
+    const q = item.querySelector(`[name='question${i}']`).value;
+    const c = item.querySelector(`[name='choices${i}']`).value.split(',').map(s => s.trim());
+    const a = item.querySelector(`[name='answer${i}']`).value.trim();
+    quiz.push({ question: q, choices: c, answer: a });
+  }
 
-      const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/activity", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ name, description, date, softSkills, hardSkills, quiz })
-      });
+  // ✅ Log data ก่อนส่ง
+  console.log("Sending:", { name, description, date, softSkills, hardSkills, quiz });
 
-      if (res.ok) {
-        alert("Activity submitted for approval.");
-        document.getElementById("activityForm").reset();
-        document.getElementById("quizContainer").innerHTML = "";
-      } else {
-        const data = await res.json();
-        alert(data.message || "Submission failed");
-      }
-    };
+  const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/activity", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name, description, date, softSkills, hardSkills, quiz })
+  });
 
-    window.onload = () => {
-      document.getElementById("creatorName").innerText = localStorage.getItem("name") || "Creator";
-    };
+  if (res.ok) {
+    alert("Activity submitted for approval.");
+    document.getElementById("activityForm").reset();
+    document.getElementById("quizContainer").innerHTML = "";
+  } else {
+    const data = await res.json();
+    alert(data.message || "Submission failed");
+  }
+};
   </script>
 </body>
 </html>
