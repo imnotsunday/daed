@@ -123,41 +123,22 @@
     </form>
   </div>
   <script type="module">
-    import { apiPost, storeTemp } from './api.js';
-    import { logout } from './auth.js';
-    window.logout = logout;
+  import { storeTemp } from './api.js';
+  import { logout } from './auth.js';
+  window.logout = logout;
 
-    document.getElementById('nextBtn').addEventListener('click', async () => {
-      const imageInput = document.getElementById('image');
-      const file = imageInput.files[0];
-      let imageUrl = null;
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    const payload = {
+      name: document.getElementById('name').value,
+      eventDate: document.getElementById('date').value,
+      description: document.getElementById('description').value,
+      softSkills: document.getElementById('softSkills').value.split(',').map(s => s.trim()).filter(Boolean),
+      hardSkills: document.getElementById('hardSkills').value.split(',').map(s => s.trim()).filter(Boolean)
+    };
 
-      if (file) {
-        const filename = `activity_${Date.now()}_${file.name}`;
-        const signed = await apiPost('/upload-activity-image', {
-          fileName: filename,
-          contentType: file.type
-        });
-        await fetch(signed.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type },
-          body: file
-        });
-        imageUrl = signed.fileUrl;
-      }
-
-      const payload = {
-        name: document.getElementById('name').value,
-        eventDate: document.getElementById('date').value,
-        description: document.getElementById('description').value,
-        softSkills: document.getElementById('softSkills').value.split(',').map(s => s.trim()).filter(Boolean),
-        hardSkills: document.getElementById('hardSkills').value.split(',').map(s => s.trim()).filter(Boolean),
-        imageUrl
-      };
-
-      storeTemp('new-activity', payload); // เก็บไว้ชั่วคราวเพื่อใช้ในหน้า quiz
-      window.location.href = 'new-activity-quiz.html';
-    });
-  </script>
+    storeTemp('new-activity', payload); // เก็บไว้ชั่วคราวเพื่อใช้ในหน้า quiz
+    window.location.href = 'new-activity-quiz.html';
+  });
+</script>
 </body>
 </html>
