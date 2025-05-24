@@ -52,3 +52,12 @@ export async function apiDelete(path) {
 export function storeTemp(data) {
   localStorage.setItem('tempActivity', JSON.stringify(data));
 }
+
+export function loadTemp(key) {
+  const data = localStorage.getItem(key);
+  return data ? JSON.parse(data) : null;
+}
+
+export function clearTemp(key) {
+  localStorage.removeItem(key);
+}
