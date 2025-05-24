@@ -106,60 +106,83 @@
   </div>
 
   <script type="module">
-    import { apiPost, loadTemp, clearTemp } from './api.js';
-    import { logout } from './auth.js';
-    window.logout = logout;
+  import { apiPost, loadTemp, clearTemp } from './api.js';
+  import { logout } from './auth.js';
+  window.logout = logout;
 
-    const activity = loadTemp('new-activity');
-    let quizData = [];
+  const activity = loadTemp('new-activity');
+  if (!activity) {
+    alert('Please create activity first.');
+    window.location.href = 'new-activity.html';
+  }
 
-    async function createActivity() {
-      const res = await apiPost('/create-activity', activity);
-      return res.activityId;
-    }
+  const quizContainer = document.getElementById('quizContainer');
+  const addQuestionBtn = document.getElementById('addQuestionBtn');
+  const submitBtn = document.getElementById('submitBtn');
 
-    function addQuestion() {
-      const div = document.createElement('div');
-      div.className = 'question-box';
-      div.innerHTML = `
-        <label>Question</label>
-        <textarea class="q-text"></textarea>
+  function addQuestion() {
+    const div = document.createElement('div');
+    div.className = 'question-box';
+    div.innerHTML = `
+      <label>Question</label>
+      <textarea class="q-text"></textarea>
 
-        <label>Options</label>
-        <div class="option-input"><input class="opt" placeholder="Option 1"><input class="opt" placeholder="Option 2"></div>
-        <div class="option-input"><input class="opt" placeholder="Option 3"><input class="opt" placeholder="Option 4"></div>
+      <label>Options</label>
+      <div class="option-input"><input class="opt" placeholder="Option 1"><input class="opt" placeholder="Option 2"></div>
+      <div class="option-input"><input class="opt" placeholder="Option 3"><input class="opt" placeholder="Option 4"></div>
 
-        <label>Correct Answer</label>
-        <input class="correct">
+      <label>Correct Answer</label>
+      <input class="correct">
 
-        <label>Related Skill</label>
-        <input class="skill">
-      `;
-      document.getElementById('quizContainer').appendChild(div);
-    }
+      <label>Related Skill</label>
+      <input class="skill">
+    `;
+    quizContainer.appendChild(div);
+  }
 
-    async function submitQuiz() {
-      const boxes = document.querySelectorAll('.question-box');
-      const questions = [];
+  async function createActivity() {
+    const res = await apiPost('/create-activity', activity);
+    return res.activityId;
+  }
 
-      boxes.forEach(box => {
-        const question = box.querySelector('.q-text').value;
-        const options = [...box.querySelectorAll('.opt')].map(i => i.value).filter(v => v);
-        const correctAnswer = box.querySelector('.correct').value;
-        const relatedSkill = box.querySelector('.skill').value;
-        if (question && options.length >= 2 && correctAnswer && relatedSkill) {
-          questions.push({ question, options, correctAnswer, relatedSkill });
+  async function submitQuiz() {
+    const boxes = document.querySelectorAll('.question-box');
+    const questions = [];
+
+    boxes.forEach(box => {
+      const question = box.querySelector('.q-text').value;
+      const options = [...box.querySelectorAll('.opt')].map(i => i.value).filter(v => v);
+      const correctAnswer = box.querySelector('.correct').value;
+      const relatedSkill = box.querySelector('.skill').value;
+
+      if (question && options.length >= 2 && correctAnswer && relatedSkill) {
+        if (!options.includes(correctAnswer)) {
+          alert('Correct answer must match one of the options');
+          return;
         }
-      });
+        questions.push({ question, options, correctAnswer, relatedSkill });
+      }
+    });
 
-      const activityId = await createActivity();
-      await apiPost('/add-quiz-questions', { activityId, questions });
-      clearTemp('new-activity');
-      alert('Activity created!');
-      window.location.href = 'activities-organizer.html';
+    if (questions.length === 0) {
+      alert('Please add at least one valid question.');
+      return;
     }
 
-    addQuestion();
-  </script>
+    const activityId = await createActivity();
+    await apiPost('/add-quiz-questions', { activityId, questions });
+    clearTemp('new-activity');
+    alert('Activity created!');
+    window.location.href = 'activities-organizer.html';
+  }
+
+  // ✅ ผูก event
+  addQuestionBtn.addEventListener('click', addQuestion);
+  submitBtn.addEventListener('click', submitQuiz);
+
+  // เพิ่มคำถามเริ่มต้น
+  addQuestion();
+</script>
+
 </body>
 </html>
