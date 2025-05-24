@@ -118,40 +118,37 @@
           <label>Date</label>
           <input type="date" id="date" required />
         </div>
-        <div class="form-group">
-        <label>Soft Skills</label>
-        <div class="form-group">
-        <label for="softSkills">Soft Skills</label>
-        <select id="softSkills" multiple size="5">
-          <option value="Teamwork">Teamwork</option>
-          <option value="Communication">Communication</option>
-          <option value="Problem-solving">Problem-solving</option>
-          <option value="Adaptability">Adaptability</option>
-          <option value="Creativity">Creativity</option>
-          <option value="Leadership">Leadership</option>
-          <option value="Humility">Humility</option>
-          <option value="Innovation">Innovation</option>
-        </select>
-      </div>
 
-      <!-- 🔄 Hard Skills -->
-      <div class="form-group">
-        <label for="hardSkills">Hard Skills</label>
-        <select id="hardSkills" multiple size="5">
-          <option value="Carpentry">Carpentry</option>
-          <option value="Graphic design">Graphic design</option>
-          <option value="Economics">Economics</option>
-          <option value="Foreign languages">Foreign languages</option>
-          <option value="Project management">Project management</option>
-          <option value="Medicals">Medicals</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="softSkills">Soft Skills</label>
+          <select id="softSkills" multiple size="5">
+            <option value="Teamwork">Teamwork</option>
+            <option value="Communication">Communication</option>
+            <option value="Problem-solving">Problem-solving</option>
+            <option value="Adaptability">Adaptability</option>
+            <option value="Creativity">Creativity</option>
+            <option value="Leadership">Leadership</option>
+            <option value="Humility">Humility</option>
+            <option value="Innovation">Innovation</option>
+          </select>
         </div>
 
         <div class="form-group">
-        <label>Quiz</label>
-        <div id="quizContainer"></div>
-        <button type="button" onclick="addQuizItem()">Add Quiz</button>
+          <label for="hardSkills">Hard Skills</label>
+          <select id="hardSkills" multiple size="5">
+            <option value="Carpentry">Carpentry</option>
+            <option value="Graphic design">Graphic design</option>
+            <option value="Economics">Economics</option>
+            <option value="Foreign languages">Foreign languages</option>
+            <option value="Project management">Project management</option>
+            <option value="Medicals">Medicals</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Quiz</label>
+          <div id="quizContainer"></div>
+          <button type="button" onclick="addQuizItem()">Add Quiz</button>
         </div>
         <button type="submit">Submit Activity</button>
       </form>
@@ -200,8 +197,9 @@
       const name = document.getElementById("name").value;
       const description = document.getElementById("description").value;
       const date = document.getElementById("date").value;
-      const softSkills = Array.from(document.querySelectorAll("#softSkills input:checked")).map(i => i.value);
-      const hardSkills = Array.from(document.querySelectorAll("#hardSkills input:checked")).map(i => i.value);
+
+      const softSkills = Array.from(document.getElementById("softSkills").selectedOptions).map(o => o.value);
+      const hardSkills = Array.from(document.getElementById("hardSkills").selectedOptions).map(o => o.value);
 
       const quiz = [];
       const container = document.getElementById("quizContainer");
