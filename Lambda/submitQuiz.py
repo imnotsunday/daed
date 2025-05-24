@@ -3,7 +3,6 @@ import os
 import base64
 import hmac
 import hashlib
-import time
 from datetime import datetime
 import boto3
 
@@ -26,8 +25,7 @@ def decode_jwt(token, secret):
         if sig_b64 != signature_b64:
             return None
         payload_json = base64.urlsafe_b64decode(payload_b64 + '==')
-        payload = json.loads(payload_json.decode())
-        return payload
+        return json.loads(payload_json.decode())
     except:
         return None
 
@@ -59,17 +57,19 @@ def lambda_handler(event, context):
 
         correct = 0
         total = 0
-        skills_awarded = []
+        skill_results = []
 
         for item in result.get('Items', []):
             question = {k: list(v.values())[0] for k, v in item.items()}
             qid = question['questionId']
             total += 1
-            if qid in answers and answers[qid] == question['correctAnswer']:
+            is_correct = qid in answers and answers[qid] == question['correctAnswer']
+            if is_correct:
                 correct += 1
-                skills_awarded.append(question['relatedSkill'])
-
-        score = round((correct / total) * 100) if total > 0 else 0
+            skill_results.append({
+                "name": question['relatedSkill'],
+                "pass": is_correct
+            })
 
         # 2. เก็บลง TABLE_SUBMISSIONS
         dynamodb.put_item(
@@ -77,28 +77,36 @@ def lambda_handler(event, context):
             Item={
                 "activityId": {"S": activity_id},
                 "userId": {"S": user['userId']},
-                "score": {"N": str(score)},
+                "score": {"N": str(correct)},
+                "total": {"N": str(total)},
+                "skills": {"S": json.dumps(skill_results)},
                 "answers": {"S": json.dumps(answers)},
                 "timestamp": {"S": datetime.utcnow().isoformat()}
             }
         )
 
-        # 3. เพิ่ม skill ที่ได้ลง TABLE_SKILLS
-        for skill in skills_awarded:
-            dynamodb.put_item(
-                TableName=TABLE_SKILLS,
-                Item={
-                    "userId": {"S": user['userId']},
-                    "skillName": {"S": skill},
-                    "acquiredFrom": {"S": activity_id},
-                    "dateAcquired": {"S": datetime.utcnow().date().isoformat()}
-                }
-            )
+        # 3. เพิ่ม skill ที่ผ่านเท่านั้นลง TABLE_SKILLS
+        for s in skill_results:
+            if s["pass"]:
+                dynamodb.put_item(
+                    TableName=TABLE_SKILLS,
+                    Item={
+                        "userId": {"S": user['userId']},
+                        "skillName": {"S": s["name"]},
+                        "acquiredFrom": {"S": activity_id},
+                        "dateAcquired": {"S": datetime.utcnow().date().isoformat()}
+                    }
+                )
 
         return {
             "statusCode": 200,
             "headers": {"Access-Control-Allow-Origin": "*"},
-            "body": json.dumps({"score": score, "awardedSkills": skills_awarded})
+            "body": json.dumps({
+                "message": "Quiz submitted successfully",
+                "score": correct,
+                "total": total,
+                "skills": skill_results
+            })
         }
 
     except Exception as e:

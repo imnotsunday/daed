@@ -125,57 +125,55 @@
   </div>
 
   <script type="module">
-    import { logout } from './auth.js';
-    window.logout = logout;
+  import { logout, apiGet } from './auth.js';
+  window.logout = logout;
 
-    const softSkills = {
-      'Teamwork': '#3a6345',
-      'Communication': '#4caf50',
-      'Problem-solving': '#81c784',
-      'Adaptability': '#5c6bc0',
-      'Creativity': '#64b5f6',
-      'Leadership': '#42a5f5',
-      'Humility': '#90caf9',
-      'Innovation': '#2e7d32'
-    };
+  const renderChart = (ctxId, dataObj, legendId) => {
+    const ctx = document.getElementById(ctxId);
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(dataObj),
+        datasets: [{
+          data: Object.values(dataObj),
+          backgroundColor: Object.keys(dataObj).map((_, i) =>
+            `hsl(${i * 40 % 360}, 70%, 60%)`
+          )
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        cutout: '60%'
+      }
+    });
 
-    const hardSkills = {
-      'Carpentry': '#6a1b9a',
-      'Graphic design': '#ab47bc',
-      'Economics': '#ce93d8',
-      'Foreign languages': '#81d4fa',
-      'Project management': '#0288d1',
-      'Medicals': '#4527a0'
-    };
+    const legend = document.getElementById(legendId);
+    Object.entries(dataObj).forEach(([label, _], i) => {
+      const color = `hsl(${i * 40 % 360}, 70%, 60%)`;
+      const div = document.createElement('div');
+      div.className = 'legend-item';
+      div.innerHTML = `<span class="legend-color" style="background:${color}"></span> ${label}`;
+      legend.appendChild(div);
+    });
+  };
 
-    const renderChart = (ctxId, dataObj, legendId) => {
-      const ctx = document.getElementById(ctxId);
-      const chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(dataObj),
-          datasets: [{
-            data: Object.keys(dataObj).map(() => Math.floor(Math.random() * 10) + 1),
-            backgroundColor: Object.values(dataObj)
-          }]
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          cutout: '60%'
-        }
-      });
+  async function loadDashboard() {
+    try {
+      const data = await apiGet('/student-summary');
 
-      const legend = document.getElementById(legendId);
-      Object.entries(dataObj).forEach(([label, color]) => {
-        const div = document.createElement('div');
-        div.className = 'legend-item';
-        div.innerHTML = `<span class="legend-color" style="background:${color}"></span> ${label}`;
-        legend.appendChild(div);
-      });
-    };
+      // Update total activity count
+      document.querySelector('.card h3 + div').innerText = data.totalActivities;
 
-    renderChart('softSkillChart', softSkills, 'softSkillLegend');
-    renderChart('hardSkillChart', hardSkills, 'hardSkillLegend');
-  </script>
+      // Render charts
+      renderChart('softSkillChart', data.softSkills || {}, 'softSkillLegend');
+      renderChart('hardSkillChart', data.hardSkills || {}, 'hardSkillLegend');
+    } catch (e) {
+      alert('Failed to load dashboard data');
+      console.error(e);
+    }
+  }
+
+  loadDashboard();
+</script>
 </body>
 </html>
