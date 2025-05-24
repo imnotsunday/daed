@@ -140,7 +140,8 @@
   </div>
 
   <script type="module">
-    import { apiGet, logout } from './auth.js';
+    import { apiGet } from './api.js';       
+    import { logout } from './auth.js';
     window.logout = logout;
 
     const params = new URLSearchParams(window.location.search);
