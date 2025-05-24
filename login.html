@@ -86,38 +86,38 @@
     <button onclick="login()">Login</button>
   </div>
 
-  <script>
-    async function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
+<script>
+  async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
 
-      const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ username, password })
-      });
+    const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-      const data = await res.json();
-      if (res.status !== 200) {
-        alert(data.message || "Login failed");
-        return;
-      }
+    const data = await res.json();
+    console.log("Login response:", data); // ← ✅ ใส่ตรงนี้
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
-      localStorage.setItem("name", data.name);
-
-      // redirect by role
-      switch (data.role) {
-        case 'student': window.location.href = "dashboard.html"; break;
-        case 'admin': window.location.href = "admin-approve.html"; break;
-        case 'creator': window.location.href = "create-activity.html"; break;
-        case 'advisor': window.location.href = "advisor-summary.html"; break;
-        default: alert("Unknown role"); break;
-      }
+    if (res.status !== 200) {
+      alert(data.message || "Login failed");
+      return;
     }
-  </script>
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("name", data.name);
+
+    // ตรวจ role และ redirect
+    switch (data.role) {
+      case 'student': window.location.href = "dashboard.html"; break;
+      case 'admin': window.location.href = "admin-approve.html"; break;
+      case 'creator': window.location.href = "create-activity.html"; break;
+      case 'advisor': window.location.href = "advisor-summary.html"; break;
+      default: alert("Unknown role: " + data.role); break;
+    }
+  }
+</script>
 </body>
 </html>
