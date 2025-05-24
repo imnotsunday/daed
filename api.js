@@ -49,8 +49,9 @@ export async function apiDelete(path) {
   });
   return res.json();
 }
-export function storeTemp(data) {
-  localStorage.setItem('tempActivity', JSON.stringify(data));
+
+export function storeTemp(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
 }
 
 export function loadTemp(key) {
