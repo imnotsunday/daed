@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Details - Skillio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+      overflow-y: auto;
+      background: #f5f5f5;
+    }
+    h2, h3 {
+      margin-bottom: 10px;
+    }
+    .badge {
+      display: inline-block;
+      background: #e0e0e0;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+    }
+    .activity {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .activity h4 {
+      margin: 0;
+    }
+    .activity small {
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item" onclick="location.href='advisor-dashboard.html'">⬅ Back</div>
+    <div class="menu-item" onclick="logout()">Log Out</div>
+  </div>
+  <div class="main">
+    <h2 id="student-name">Student Name</h2>
+    <p><strong>ID:</strong> <span id="student-id"></span></p>
+    <p><strong>Total Activities:</strong> <span id="activity-count"></span></p>
+
+    <h3>Soft Skills</h3>
+    <div id="soft-skills"></div>
+
+    <h3>Hard Skills</h3>
+    <div id="hard-skills"></div>
+
+    <h3>Quiz Responses</h3>
+    <div id="activities"></div>
+  </div>
+
+  <script type="module">
+    import { apiGet, logout } from './auth.js';
+    window.logout = logout;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentId = urlParams.get('studentId');
+
+    if (!studentId) {
+      alert("Missing studentId");
+    }
+
+    async function loadStudentSummary() {
+      try {
+        const data = await apiGet('/student-summary?studentId=' + studentId);
+
+        document.getElementById("student-name").innerText = data.name;
+        document.getElementById("student-id").innerText = data.studentId;
+        document.getElementById("activity-count").innerText = data.totalActivities;
+
+        const softSkills = document.getElementById("soft-skills");
+        const hardSkills = document.getElementById("hard-skills");
+
+        data.softSkills.forEach(s => {
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.innerText = s;
+          softSkills.appendChild(badge);
+        });
+
+        data.hardSkills.forEach(s => {
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.innerText = s;
+          hardSkills.appendChild(badge);
+        });
+
+        const actContainer = document.getElementById("activities");
+        data.activities.forEach(a => {
+          const box = document.createElement("div");
+          box.className = "activity";
+          box.innerHTML = `
+            <h4>${a.name}</h4>
+            <small>Score: ${a.score}/${a.total}</small><br />
+            <small>Skills: ${(a.skills || []).join(', ')}</small><br />
+            ${a.proofUrl ? '<a href="' + a.proofUrl + '" target="_blank">View Proof</a>' : ''}
+            `;
+          actContainer.appendChild(box);
+        });
+      } catch (e) {
+        alert("Failed to load student details.");
+      }
+    }
+
+    loadStudentSummary();
+  </script>
+</body>
+</html>
