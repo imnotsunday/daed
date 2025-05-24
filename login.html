@@ -91,6 +91,8 @@
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
+     console.log("Sending:", { username, password });
+
     const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
