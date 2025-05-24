@@ -119,17 +119,35 @@
           <input type="date" id="date" required />
         </div>
         <div class="form-group">
-          <label>Soft Skills (comma separated)</label>
-          <input type="text" id="softSkills" />
+        <label>Soft Skills</label>
+        <div id="softSkills">
+            <label><input type="checkbox" value="Teamwork"> Teamwork</label><br>
+            <label><input type="checkbox" value="Communication"> Communication</label><br>
+            <label><input type="checkbox" value="Problem-solving"> Problem-solving</label><br>
+            <label><input type="checkbox" value="Adaptability"> Adaptability</label><br>
+            <label><input type="checkbox" value="Creativity"> Creativity</label><br>
+            <label><input type="checkbox" value="Leadership"> Leadership</label><br>
+            <label><input type="checkbox" value="Humility"> Humility</label><br>
+            <label><input type="checkbox" value="Innovation"> Innovation</label>
         </div>
-        <div class="form-group">
-          <label>Hard Skills (comma separated)</label>
-          <input type="text" id="hardSkills" />
         </div>
+
         <div class="form-group">
-          <label>Quiz</label>
-          <div id="quizContainer"></div>
-          <button type="button" onclick="addQuizItem()">Add Quiz</button>
+        <label>Hard Skills</label>
+        <div id="hardSkills">
+            <label><input type="checkbox" value="Carpentry"> Carpentry</label><br>
+            <label><input type="checkbox" value="Graphic design"> Graphic design</label><br>
+            <label><input type="checkbox" value="Economics"> Economics</label><br>
+            <label><input type="checkbox" value="Foreign languages"> Foreign languages</label><br>
+            <label><input type="checkbox" value="Project management"> Project management</label><br>
+            <label><input type="checkbox" value="Medicals"> Medicals</label>
+        </div>
+        </div>
+
+        <div class="form-group">
+        <label>Quiz</label>
+        <div id="quizContainer"></div>
+        <button type="button" onclick="addQuizItem()">Add Quiz</button>
         </div>
         <button type="submit">Submit Activity</button>
       </form>
@@ -151,55 +169,69 @@
       div.innerHTML = `
         <label>Question</label>
         <input type="text" name="question${index}" required />
-        <label>Choices (comma separated)</label>
-        <input type="text" name="choices${index}" required />
-        <label>Correct Answer (A/B/C/D)</label>
-        <input type="text" name="answer${index}" required />
+        <label>Choice A</label>
+        <input type="text" name="choiceA${index}" required />
+        <label>Choice B</label>
+        <input type="text" name="choiceB${index}" required />
+        <label>Choice C</label>
+        <input type="text" name="choiceC${index}" required />
+        <label>Choice D</label>
+        <input type="text" name="choiceD${index}" required />
+        <label>Correct Answer</label>
+        <select name="answer${index}" required>
+          <option value="">-- Select --</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+        </select>
       `;
       container.appendChild(div);
     }
 
     document.getElementById("activityForm").onsubmit = async function(e) {
-  e.preventDefault();
-  const token = localStorage.getItem("token");
+      e.preventDefault();
+      const token = localStorage.getItem("token");
 
-  const name = document.getElementById("name").value;
-  const description = document.getElementById("description").value;
-  const date = document.getElementById("date").value;
-  const softSkills = document.getElementById("softSkills").value.split(',').map(s => s.trim());
-  const hardSkills = document.getElementById("hardSkills").value.split(',').map(s => s.trim());
+      const name = document.getElementById("name").value;
+      const description = document.getElementById("description").value;
+      const date = document.getElementById("date").value;
+      const softSkills = Array.from(document.querySelectorAll("#softSkills input:checked")).map(i => i.value);
+      const hardSkills = Array.from(document.querySelectorAll("#hardSkills input:checked")).map(i => i.value);
 
-  const quiz = [];
-  const container = document.getElementById("quizContainer");
-  for (let i = 0; i < container.children.length; i++) {
-    const item = container.children[i];
-    const q = item.querySelector(`[name='question${i}']`).value;
-    const c = item.querySelector(`[name='choices${i}']`).value.split(',').map(s => s.trim());
-    const a = item.querySelector(`[name='answer${i}']`).value.trim();
-    quiz.push({ question: q, choices: c, answer: a });
-  }
+      const quiz = [];
+      const container = document.getElementById("quizContainer");
+      for (let i = 0; i < container.children.length; i++) {
+        const item = container.children[i];
+        const q = item.querySelector(`[name='question${i}']`).value;
+        const a = item.querySelector(`[name='choiceA${i}']`).value;
+        const b = item.querySelector(`[name='choiceB${i}']`).value;
+        const c = item.querySelector(`[name='choiceC${i}']`).value;
+        const d = item.querySelector(`[name='choiceD${i}']`).value;
+        const ans = item.querySelector(`[name='answer${i}']`).value;
+        quiz.push({ question: q, choices: [a, b, c, d], answer: ans });
+      }
 
-  // ✅ Log data ก่อนส่ง
-  console.log("Sending:", { name, description, date, softSkills, hardSkills, quiz });
+      console.log("Sending:", { name, description, date, softSkills, hardSkills, quiz });
 
-  const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/activity", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ name, description, date, softSkills, hardSkills, quiz })
-  });
+      const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/activity", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, description, date, softSkills, hardSkills, quiz })
+      });
 
-  if (res.ok) {
-    alert("Activity submitted for approval.");
-    document.getElementById("activityForm").reset();
-    document.getElementById("quizContainer").innerHTML = "";
-  } else {
-    const data = await res.json();
-    alert(data.message || "Submission failed");
-  }
-};
+      if (res.ok) {
+        alert("Activity submitted for approval.");
+        document.getElementById("activityForm").reset();
+        document.getElementById("quizContainer").innerHTML = "";
+      } else {
+        const data = await res.json();
+        alert(data.message || "Submission failed");
+      }
+    };
   </script>
 </body>
 </html>
