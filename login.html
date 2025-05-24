@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skillio Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .left {
+      flex: 1;
+      background-color: #e2f3e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .left img.logo {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      height: 80px;
+    }
+    .left .illustration {
+      max-width: 90%;
+    }
+    .right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .right h2 {
+      font-size: 32px;
+      margin-bottom: 30px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+      width: 100%;
+      max-width: 300px;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 15px;
+      border-radius: 25px;
+      border: 1px solid #aaa;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      background-color: #147a34;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0e5e27;
+    }
+  </style>
+</head>
+<body>
+  <div class="left">
+    <img src="logo.png" class="logo" alt="Skillio logo" />
+    <img src="illustration.png" class="illustration" alt="Login visual" />
+  </div>
+  <div class="right">
+    <h2>Login</h2>
+    <div class="form-group">
+      <input type="text" id="username" placeholder="Username" />
+    </div>
+    <div class="form-group">
+      <input type="password" id="password" placeholder="Password" />
+    </div>
+    <button onclick="login()">Login</button>
+  </div>
+
+  <script>
+    async function login() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+      if (res.status !== 200) {
+        alert(data.message || "Login failed");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("name", data.name);
+
+      // redirect by role
+      switch (data.role) {
+        case 'student': window.location.href = "dashboard.html"; break;
+        case 'admin': window.location.href = "admin-approve.html"; break;
+        case 'creator': window.location.href = "create-activity.html"; break;
+        case 'advisor': window.location.href = "advisor-summary.html"; break;
+        default: alert("Unknown role"); break;
+      }
+    }
+  </script>
+</body>
+</html>

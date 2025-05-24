@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advisor Summary - Skillio</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #147a34;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-item {
+      margin: 10px 0;
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .menu-item.active {
+      font-weight: bold;
+      border-left: 4px solid white;
+      padding-left: 8px;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background-color: white;
+      color: #147a34;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: bold;
+    }
+    .content {
+      flex-grow: 1;
+      padding: 40px;
+      background-color: #f6f6f6;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .card h3 {
+      margin-top: 0;
+    }
+    .skill-tag {
+      display: inline-block;
+      background: #e2f3e5;
+      color: #147a34;
+      padding: 5px 10px;
+      margin: 4px 4px 0 0;
+      border-radius: 15px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <img src="logo.png" style="height: 60px; margin-bottom: 40px;" alt="Skillio Logo">
+    <a href="#" class="menu-item active">Student Summary</a>
+    <div class="profile">
+      <div><strong id="advisorName">Advisor</strong></div>
+      <div class="logout" onclick="logout()">Log out</div>
+    </div>
+  </div>
+  <div class="content">
+    <h2>Students Skill Summary</h2>
+    <div id="summaryList">Loading...</div>
+  </div>
+
+  <script>
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    async function fetchSummary() {
+      const token = localStorage.getItem("token");
+      const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/advisor-summary", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      const container = document.getElementById("summaryList");
+      container.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        container.innerHTML = "<p>No student data found.</p>";
+        return;
+      }
+
+      data.forEach(student => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h3>${student.studentId}</h3>
+          <div>
+            ${(student.skills || []).map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    window.onload = () => {
+      document.getElementById("advisorName").innerText = localStorage.getItem("name") || "Advisor";
+      fetchSummary();
+    };
+  </script>
+</body>
+</html>

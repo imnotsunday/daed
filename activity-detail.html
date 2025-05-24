@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activity Detail - Skillio</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #147a34;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-item {
+      margin: 10px 0;
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .menu-item.active {
+      font-weight: bold;
+      border-left: 4px solid white;
+      padding-left: 8px;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background-color: white;
+      color: #147a34;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: bold;
+    }
+    .content {
+      flex-grow: 1;
+      padding: 40px;
+      background-color: #f6f6f6;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    .tags span {
+      display: inline-block;
+      background: #e2f3e5;
+      color: #147a34;
+      padding: 4px 10px;
+      margin: 5px 5px 0 0;
+      border-radius: 15px;
+      font-size: 12px;
+    }
+    .join-btn {
+      margin-top: 20px;
+      background: #147a34;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .join-btn:hover {
+      background-color: #0e5e27;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <img src="logo.png" style="height: 60px; margin-bottom: 40px;" alt="Skillio Logo">
+    <a href="dashboard.html" class="menu-item">Dashboard</a>
+    <a href="activities.html" class="menu-item active">Activities</a>
+    <div class="profile">
+      <div><strong id="studentName">Student</strong></div>
+      <div class="logout" onclick="logout()">Log out</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card" id="activityDetail">
+      <h2>Loading...</h2>
+    </div>
+  </div>
+
+  <script>
+    function getParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    async function fetchDetail() {
+      const id = getParam("id");
+      const token = localStorage.getItem('token');
+
+      const res = await fetch(`https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/activity/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const act = await res.json();
+      const el = document.getElementById("activityDetail");
+      el.innerHTML = `
+        <h2>${act.name}</h2>
+        <p>${act.description}</p>
+        <p><strong>Date:</strong> ${act.date}</p>
+        <p><strong>Soft Skills:</strong> ${(act.softSkills || []).join(', ')}</p>
+        <p><strong>Hard Skills:</strong> ${(act.hardSkills || []).join(', ')}</p>
+        <button class="join-btn" onclick="goToQuiz('${id}')">Start Quiz</button>
+      `;
+    }
+
+    function goToQuiz(id) {
+      window.location.href = `quiz.html?id=${id}`;
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    window.onload = () => {
+      const name = localStorage.getItem('name') || 'Student';
+      document.getElementById("studentName").innerText = name;
+      fetchDetail();
+    }
+  </script>
+</body>
+</html>

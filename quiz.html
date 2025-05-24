@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz - Skillio</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #147a34;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-item {
+      margin: 10px 0;
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .menu-item.active {
+      font-weight: bold;
+      border-left: 4px solid white;
+      padding-left: 8px;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background-color: white;
+      color: #147a34;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: bold;
+    }
+    .content {
+      flex-grow: 1;
+      padding: 40px;
+      background-color: #f6f6f6;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    .question h3 {
+      margin-bottom: 10px;
+    }
+    .question label {
+      display: block;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+    .proof-upload {
+      margin-top: 30px;
+    }
+    .submit-btn {
+      margin-top: 20px;
+      background: #147a34;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <img src="logo.png" style="height: 60px; margin-bottom: 40px;" alt="Skillio Logo">
+    <a href="dashboard.html" class="menu-item">Dashboard</a>
+    <a href="activities.html" class="menu-item">Activities</a>
+    <div class="profile">
+      <div><strong id="studentName">Student</strong></div>
+      <div class="logout" onclick="logout()">Log out</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <h2>Quiz</h2>
+      <form id="quizForm">
+        <div id="quizContainer"></div>
+        <div class="proof-upload">
+          <label>Upload proof of participation (optional):</label>
+          <input type="file" id="proofImage" accept="image/*">
+        </div>
+        <button class="submit-btn" type="submit">Submit Quiz</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function getParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    async function fetchQuiz() {
+      const activityId = getParam("id");
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/quiz/${activityId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const questions = await res.json();
+      const container = document.getElementById("quizContainer");
+      container.innerHTML = "";
+
+      questions.forEach((q, index) => {
+        const div = document.createElement("div");
+        div.className = "question";
+        div.innerHTML = `<h3>${index + 1}. ${q.question}</h3>` +
+          q.choices.map((choice, i) => `
+            <label>
+              <input type="radio" name="${q.quizId}" value="${choice}" required /> ${choice}
+            </label>
+          `).join("");
+        container.appendChild(div);
+      });
+    }
+
+    document.getElementById("quizForm").onsubmit = async function(e) {
+      e.preventDefault();
+      const activityId = getParam("id");
+      const token = localStorage.getItem("token");
+      const formData = new FormData(e.target);
+
+      const answers = {};
+      for (let [key, value] of formData.entries()) {
+        if (key !== 'proofImage') {
+          answers[key] = value;
+        }
+      }
+
+      const file = document.getElementById("proofImage").files[0];
+      let imageBase64 = null;
+      if (file) {
+        const buffer = await file.arrayBuffer();
+        imageBase64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      }
+
+      const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/submit-quiz", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ activityId, answers, imageBase64 })
+      });
+
+      const result = await res.json();
+      if (res.status === 200) {
+        localStorage.setItem("quizResult", JSON.stringify(result));
+        window.location.href = "result.html";
+      } else {
+        alert(result.message || "Submission failed");
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    window.onload = () => {
+      document.getElementById("studentName").innerText = localStorage.getItem("name") || "Student";
+      fetchQuiz();
+    }
+  </script>
+</body>
+</html>

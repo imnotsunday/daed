@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Activity - Skillio</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background-color: #147a34;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-item {
+      margin: 10px 0;
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .menu-item.active {
+      font-weight: bold;
+      border-left: 4px solid white;
+      padding-left: 8px;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background-color: white;
+      color: #147a34;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: bold;
+    }
+    .content {
+      flex-grow: 1;
+      padding: 40px;
+      background-color: #f6f6f6;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 700px;
+    }
+    .card h2 {
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background: #147a34;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .quiz-item {
+      margin-bottom: 20px;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <img src="logo.png" style="height: 60px; margin-bottom: 40px;" alt="Skillio Logo">
+    <a href="#" class="menu-item active">Create Activity</a>
+    <div class="profile">
+      <div><strong id="creatorName">Creator</strong></div>
+      <div class="logout" onclick="logout()">Log out</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <h2>Create New Activity</h2>
+      <form id="activityForm">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="name" required />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="description" required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="date" required />
+        </div>
+        <div class="form-group">
+          <label>Soft Skills (comma separated)</label>
+          <input type="text" id="softSkills" />
+        </div>
+        <div class="form-group">
+          <label>Hard Skills (comma separated)</label>
+          <input type="text" id="hardSkills" />
+        </div>
+        <div class="form-group">
+          <label>Quiz</label>
+          <div id="quizContainer"></div>
+          <button type="button" onclick="addQuizItem()">Add Quiz</button>
+        </div>
+        <button type="submit">Submit Activity</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    function addQuizItem() {
+      const container = document.getElementById("quizContainer");
+      const index = container.children.length;
+
+      const div = document.createElement("div");
+      div.className = "quiz-item";
+      div.innerHTML = `
+        <label>Question</label>
+        <input type="text" name="question${index}" required />
+        <label>Choices (comma separated)</label>
+        <input type="text" name="choices${index}" required />
+        <label>Correct Answer (A/B/C/D)</label>
+        <input type="text" name="answer${index}" required />
+      `;
+      container.appendChild(div);
+    }
+
+    document.getElementById("activityForm").onsubmit = async function(e) {
+      e.preventDefault();
+      const token = localStorage.getItem("token");
+
+      const name = document.getElementById("name").value;
+      const description = document.getElementById("description").value;
+      const date = document.getElementById("date").value;
+      const softSkills = document.getElementById("softSkills").value.split(',').map(s => s.trim());
+      const hardSkills = document.getElementById("hardSkills").value.split(',').map(s => s.trim());
+
+      const quiz = [];
+      const container = document.getElementById("quizContainer");
+      for (let i = 0; i < container.children.length; i++) {
+        const item = container.children[i];
+        const q = item.querySelector(`[name='question${i}']`).value;
+        const c = item.querySelector(`[name='choices${i}']`).value.split(',').map(s => s.trim());
+        const a = item.querySelector(`[name='answer${i}']`).value.trim();
+        quiz.push({ question: q, choices: c, answer: a });
+      }
+
+      const res = await fetch("https://bxugzxjueg.execute-api.us-east-1.amazonaws.com/prod/activity", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, description, date, softSkills, hardSkills, quiz })
+      });
+
+      if (res.ok) {
+        alert("Activity submitted for approval.");
+        document.getElementById("activityForm").reset();
+        document.getElementById("quizContainer").innerHTML = "";
+      } else {
+        const data = await res.json();
+        alert(data.message || "Submission failed");
+      }
+    };
+
+    window.onload = () => {
+      document.getElementById("creatorName").innerText = localStorage.getItem("name") || "Creator";
+    };
+  </script>
+</body>
+</html>
