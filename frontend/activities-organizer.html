@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Activities - Organizer</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .header h2 {
+      margin: 0;
+    }
+    .new-btn {
+      background-color: #147a34;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .activity-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .activity-card img {
+      width: 120px;
+      height: auto;
+      border-radius: 8px;
+    }
+    .activity-content {
+      flex-grow: 1;
+    }
+    .activity-content h4 {
+      margin: 0;
+    }
+    .activity-content p {
+      margin: 5px 0;
+      color: #555;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .tag {
+      background-color: #e0e0e0;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item active">My Activities</div>
+    <div class="profile">
+      👤 Organizer<br/>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="header">
+      <h2>My Activities</h2>
+      <button class="new-btn" onclick="location.href='new-activity.html'">+ NEW</button>
+    </div>
+    <div id="activity-list"></div>
+  </div>
+
+  <script type="module">
+    import { logout } from './auth.js';
+    import { apiGet } from './api.js';
+    window.logout = logout;
+
+    async function loadActivities() {
+      const container = document.querySelector('#activity-list');
+      const activities = await apiGet('/my-activities');
+
+      activities.forEach(activity => {
+        const card = document.createElement('div');
+        card.className = 'activity-card';
+        card.innerHTML = `
+          <img src="${activity.imageUrl || 'illustration.png'}" alt="activity" />
+          <div class="activity-content">
+            <h4>${activity.name}</h4>
+            <p>${activity.eventDate || 'TBA'}</p>
+            <p>${activity.description || ''}</p>
+            <div class="tags">
+              ${(activity.hardSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+              ${(activity.softSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    loadActivities();
+  </script>
+</body>
+</html>

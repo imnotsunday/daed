@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz - Skillio</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .question-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .question {
+      font-weight: bold;
+    }
+    .options {
+      margin-top: 10px;
+    }
+    .options label {
+      display: block;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    .submit-btn {
+      background-color: #147a34;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item" onclick="location.href='dashboard.html'">Dashboard</div>
+    <div class="menu-item" onclick="location.href='activities.html'">Activities</div>
+    <div class="profile">
+      👤 Student<br/>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <h2>Quiz</h2>
+    <form id="quizForm"></form>
+<div class="question-card">
+  <label><strong>• Attach proof of participation</strong></label><br/>
+  <input type="file" id="proofFile" name="proofFile" accept="image/*,.pdf" />
+</div>
+    <button class="submit-btn" id="submitBtn">Submit</button>
+  </div>
+
+  <script type="module">
+    import { apiGet, apiPost } from './api.js';
+    import { logout, getUserId } from './auth.js';
+    window.logout = logout;
+
+    const params = new URLSearchParams(window.location.search);
+    const activityId = params.get('activityId');
+
+    async function loadQuiz() {
+      const questions = await apiGet(`/quiz?activityId=${activityId}`);
+      const form = document.getElementById('quizForm');
+      form.innerHTML = '';
+
+      questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.className = 'question-card';
+        div.innerHTML = `
+          <div class="question">${index + 1}. ${q.question}</div>
+          <div class="options">
+            ${q.options.map(opt => `
+              <label><input type="radio" name="q${q.id}" value="${opt}" required /> ${opt}</label>
+            `).join('')}
+          </div>
+        `;
+        form.appendChild(div);
+      });
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const formData = new FormData(document.getElementById('quizForm'));
+      const answers = {};
+      for (let [key, value] of formData.entries()) {
+        if (!key.startsWith('q')) continue;
+        answers[key] = value;
+      }
+
+      // Handle file upload if provided
+      const fileInput = document.getElementById('proofFile');
+      let proofUrl = null;
+      if (fileInput && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const filename = `${activityId}_${Date.now()}_${file.name}`;
+
+        const signedRes = await apiPost('/upload-proof-url', {
+          fileName: filename,
+          contentType: file.type,
+          activityId
+        });
+
+        await fetch(signedRes.uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
+
+        proofUrl = signedRes.fileUrl;
+      }
+
+      const res = await apiPost('/submit-quiz', {
+        activityId,
+        answers,
+        proofUrl // pass proof URL to backend
+      });
+
+      alert(res.message || 'Submitted!');
+      window.location.href = `quiz-result.html?activityId=${activityId}`;
+    });
+
+    loadQuiz();
+  </script>
+</body>
+</html>

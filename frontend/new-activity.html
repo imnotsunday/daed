@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Activity - Skillio</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    form {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+    .skill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .tag {
+      background: #e0e0e0;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    .next-btn {
+      margin-top: 25px;
+      background-color: #147a34;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item">My Activities</div>
+    <div class="profile">
+      👤 Organizer<br>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <h2>New Activity</h2>
+    <form id="activityForm">
+      <label>Cover Image</label>
+      <input type="file" id="image" accept="image/*">
+
+      <label>Activity Name</label>
+      <input type="text" id="name" required>
+
+      <label>Date</label>
+      <input type="date" id="date" required>
+
+      <label>Description</label>
+      <textarea id="description" rows="4"></textarea>
+
+      <label>Soft Skills</label>
+      <input type="text" id="softSkills" placeholder="Comma separated">
+
+      <label>Hard Skills</label>
+      <input type="text" id="hardSkills" placeholder="Comma separated">
+
+      <button class="next-btn" type="button" id="nextBtn">Next</button>
+    </form>
+  </div>
+  <script type="module">
+    import { apiPost, storeTemp } from './api.js';
+    import { logout } from './auth.js';
+    window.logout = logout;
+
+    document.getElementById('nextBtn').addEventListener('click', async () => {
+      const imageInput = document.getElementById('image');
+      const file = imageInput.files[0];
+      let imageUrl = null;
+
+      if (file) {
+        const filename = `activity_${Date.now()}_${file.name}`;
+        const signed = await apiPost('/upload-activity-image', {
+          fileName: filename,
+          contentType: file.type
+        });
+        await fetch(signed.uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
+        imageUrl = signed.fileUrl;
+      }
+
+      const payload = {
+        name: document.getElementById('name').value,
+        eventDate: document.getElementById('date').value,
+        description: document.getElementById('description').value,
+        softSkills: document.getElementById('softSkills').value.split(',').map(s => s.trim()).filter(Boolean),
+        hardSkills: document.getElementById('hardSkills').value.split(',').map(s => s.trim()).filter(Boolean),
+        imageUrl
+      };
+
+      storeTemp('new-activity', payload); // เก็บไว้ชั่วคราวเพื่อใช้ในหน้า quiz
+      window.location.href = 'new-activity-quiz.html';
+    });
+  </script>
+</body>
+</html>

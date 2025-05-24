@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pending Activities - Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .activity-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .activity-card img {
+      width: 120px;
+      height: auto;
+      border-radius: 8px;
+    }
+    .activity-content {
+      flex-grow: 1;
+    }
+    .activity-content h4 {
+      margin: 0;
+    }
+    .activity-content p {
+      margin: 5px 0;
+      color: #555;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .tag {
+      background-color: #e0e0e0;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .action-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .action-btns button {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      font-size: 18px;
+      color: white;
+      cursor: pointer;
+    }
+    .approve { background-color: #4CAF50; }
+    .reject { background-color: #f44336; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item active">Activities</div>
+    <div class="profile">
+      👤 Admin<br>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <h2>Pending Activities</h2>
+    <div id="activity-list"></div>
+  </div>
+
+  <script type="module">
+    import { apiGet, apiPost } from './api.js';
+    import { logout } from './auth.js';
+    window.logout = logout;
+
+    async function loadPendingActivities() {
+      const container = document.getElementById('activity-list');
+      const activities = await apiGet('/pending-activities');
+      container.innerHTML = '';
+
+      activities.forEach(activity => {
+        const card = document.createElement('div');
+        card.className = 'activity-card';
+
+        card.innerHTML = `
+          <img src="${activity.imageUrl || 'illustration.png'}" alt="activity" />
+          <div class="activity-content">
+            <h4>${activity.name}</h4>
+            <p>${activity.eventDate || 'TBA'}</p>
+            <p>${activity.description || ''}</p>
+            <div class="tags">
+              ${(activity.hardSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+              ${(activity.softSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+            </div>
+          </div>
+          <div class="action-btns">
+            <button class="approve">✔</button>
+            <button class="reject">✘</button>
+          </div>
+        `;
+
+        const approveBtn = card.querySelector('.approve');
+        const rejectBtn = card.querySelector('.reject');
+
+        approveBtn.onclick = async () => {
+          await apiPost('/approve-activity', { activityId: activity.activityId, status: 'approved' });
+          card.remove();
+        };
+
+        rejectBtn.onclick = async () => {
+          await apiPost('/approve-activity', { activityId: activity.activityId, status: 'rejected' });
+          card.remove();
+        };
+
+        container.appendChild(card);
+      });
+    }
+
+    loadPendingActivities();
+  </script>
+</body>
+</html>

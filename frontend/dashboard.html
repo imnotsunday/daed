@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Skillio</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .menu-item.active {
+      border-left: 4px solid white;
+      padding-left: 10px;
+      font-weight: bold;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      margin: 0 0 10px;
+    }
+    .skills-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    canvas {
+      max-width: 300px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item active">Dashboard</div>
+    <div class="menu-item" onclick="location.href='activities.html'">Activities</div>
+    <div class="profile">
+      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span>
+      </div>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <h2>Dashboard</h2>
+    <div class="card">
+      <h3>Total Activities</h3>
+      <div style="font-size: 40px; font-weight: bold; color: #147a34;">151</div>
+    </div>
+
+    <div class="card">
+      <h3>Your Acquired Skills</h3>
+      <div style="display: flex; gap: 60px; flex-wrap: wrap;">
+        <div>
+          <canvas id="softSkillChart"></canvas>
+          <div class="skills-legend" id="softSkillLegend"></div>
+        </div>
+        <div>
+          <canvas id="hardSkillChart"></canvas>
+          <div class="skills-legend" id="hardSkillLegend"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { logout } from './auth.js';
+    window.logout = logout;
+
+    const softSkills = {
+      'Teamwork': '#3a6345',
+      'Communication': '#4caf50',
+      'Problem-solving': '#81c784',
+      'Adaptability': '#5c6bc0',
+      'Creativity': '#64b5f6',
+      'Leadership': '#42a5f5',
+      'Humility': '#90caf9',
+      'Innovation': '#2e7d32'
+    };
+
+    const hardSkills = {
+      'Carpentry': '#6a1b9a',
+      'Graphic design': '#ab47bc',
+      'Economics': '#ce93d8',
+      'Foreign languages': '#81d4fa',
+      'Project management': '#0288d1',
+      'Medicals': '#4527a0'
+    };
+
+    const renderChart = (ctxId, dataObj, legendId) => {
+      const ctx = document.getElementById(ctxId);
+      const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(dataObj),
+          datasets: [{
+            data: Object.keys(dataObj).map(() => Math.floor(Math.random() * 10) + 1),
+            backgroundColor: Object.values(dataObj)
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          cutout: '60%'
+        }
+      });
+
+      const legend = document.getElementById(legendId);
+      Object.entries(dataObj).forEach(([label, color]) => {
+        const div = document.createElement('div');
+        div.className = 'legend-item';
+        div.innerHTML = `<span class="legend-color" style="background:${color}"></span> ${label}`;
+        legend.appendChild(div);
+      });
+    };
+
+    renderChart('softSkillChart', softSkills, 'softSkillLegend');
+    renderChart('hardSkillChart', hardSkills, 'hardSkillLegend');
+  </script>
+</body>
+</html>

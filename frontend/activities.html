@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activities - Skillio</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .menu-item.active {
+      border-left: 4px solid white;
+      padding-left: 10px;
+      font-weight: bold;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .search-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .search-bar input {
+      padding: 8px 12px;
+      width: 250px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    .filter-icon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .activity-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .activity-card img {
+      width: 120px;
+      height: auto;
+      border-radius: 8px;
+    }
+    .activity-content {
+      flex-grow: 1;
+    }
+    .activity-content h4 {
+      margin: 0;
+    }
+    .activity-content p {
+      margin: 5px 0;
+      color: #555;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .tag {
+      background-color: #e0e0e0;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .join-btn {
+      background-color: #147a34;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .join-btn.disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item" onclick="location.href='dashboard.html'">Dashboard</div>
+    <div class="menu-item active">Activities</div>
+    <div class="profile">
+      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span>
+      </div>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <h2>Activities</h2>
+    <div class="search-bar">
+      <input type="text" placeholder="Search" />
+      <div class="filter-icon">⚙️</div>
+    </div>
+    <div id="activity-list"></div>
+    </div>
+      </div>
+      </div>
+      <button class="join-btn disabled">JOIN</button>
+    </div>
+  </div>
+  <script type="module">
+  import { logout } from './auth.js';
+  import { apiGet } from './api.js';
+  window.logout = logout;
+
+  async function loadActivities() {
+    const container = document.querySelector('#activity-list');
+    const response = await apiGet('/activities');
+
+    response.forEach(activity => {
+      const card = document.createElement('div');
+      card.className = 'activity-card';
+
+      card.innerHTML = `
+        <img src="illustration.png" alt="activity" />
+        <div class="activity-content">
+          <h4>${activity.name}</h4>
+          <p>${activity.eventDate || 'TBA'}</p>
+          <p>${activity.description || ''}</p>
+          <div class="tags">
+            ${(activity.hardSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+            ${(activity.softSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+          </div>
+        </div>
+        <button class="join-btn">${activity.isJoined ? 'JOINED' : 'JOIN'}</button>
+      `;
+
+      const joinBtn = card.querySelector('.join-btn');
+      if (!activity.isJoined) {
+        joinBtn.addEventListener('click', () => {
+          window.location.href = `activity-detail.html?activityId=${activity.activityId}`;
+        });
+      } else {
+        joinBtn.disabled = true;
+        joinBtn.classList.add('disabled');
+      }
+
+      container.appendChild(card);
+    });
+  }
+
+  loadActivities();
+</script>
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activities - Skillio</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .menu-item.active {
+      border-left: 4px solid white;
+      padding-left: 10px;
+      font-weight: bold;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .search-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .search-bar input {
+      padding: 8px 12px;
+      width: 250px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    .filter-icon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .activity-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    .activity-card img {
+      width: 120px;
+      height: auto;
+      border-radius: 8px;
+    }
+    .activity-content {
+      flex-grow: 1;
+    }
+    .activity-content h4 {
+      margin: 0;
+    }
+    .activity-content p {
+      margin: 5px 0;
+      color: #555;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .tag {
+      background-color: #e0e0e0;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .join-btn {
+      background-color: #147a34;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .join-btn.disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item" onclick="location.href='dashboard.html'">Dashboard</div>
+    <div class="menu-item active">Activities</div>
+    <div class="profile">
+      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span>
+      </div>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <h2>Activities</h2>
+    <div class="search-bar">
+      <input type="text" placeholder="Search" />
+      <div class="filter-icon">⚙️</div>
+    </div>
+    <div id="activity-list"></div>
+    </div>
+
+    
+      </div>
+      <button class="join-btn">JOIN</button>
+    </div>
+
+    
+      </div>
+      <button class="join-btn disabled">JOIN</button>
+    </div>
+
+    <div class="activity-card">
+      <img src="illustration.png" alt="activity" />
+      <div class="activity-content">
+        <h4>ไททานเพื่อการแฮ็ค</h4>
+        <p>1 May 2025, 15:00-17:00</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        <div class="tags">
+          <div class="tag">Programming</div>
+          <div class="tag">Data analytics</div>
+        </div>
+      </div>
+      <button class="join-btn disabled">JOIN</button>
+    </div>
+
+    <div class="activity-card">
+      <img src="illustration.png" alt="activity" />
+      <div class="activity-content">
+        <h4>อาสาสมัครครูใจ</h4>
+        <p>1 May 2025, 15:00-17:00</p>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+        <div class="tags">
+          <div class="tag">Programming</div>
+          <div class="tag">Communication</div>
+        </div>
+      </div>
+      <button class="join-btn disabled">JOIN</button>
+    </div>
+  </div>
+  <script type="module">
+    import { logout } from './auth.js';
+    window.logout = logout;
+  import { apiGet } from './api.js';
+
+    async function loadActivities() {
+      const container = document.querySelector('#activity-list');
+      const response = await apiGet('/activities');
+
+      response.forEach(activity => {
+        const card = document.createElement('div');
+        card.className = 'activity-card';
+
+        card.innerHTML = `
+          <img src="illustration.png" alt="activity" />
+          <div class="activity-content">
+            <h4>${activity.name}</h4>
+            <p>${activity.eventDate || 'TBA'}</p>
+            <p>${activity.description || ''}</p>
+            <div class="tags">
+              ${(activity.hardSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+              ${(activity.softSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
+            </div>
+          </div>
+          <button class="join-btn">${activity.isJoined ? 'JOINED' : 'JOIN'}</button>
+        `;
+
+        const joinBtn = card.querySelector('.join-btn');
+if (!activity.isJoined) {
+  joinBtn.addEventListener('click', () => {
+  window.location.href = `activity-detail.html?activityId=${activity.activityId}`;
+});
+      } else {
+        const result = await res.json();
+        alert(result.message || 'Failed to join.');
+      }
+    } catch (err) {
+      alert('Network error.');
+    }
+  });
+}
+
+container.appendChild(card);
+      });
+    }
+
+    loadActivities();
+      loadActivities();
+  </script>
+</body>
+</html> -->

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activity Detail - Skillio</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f5f5f5;
+    }
+    .sidebar {
+      width: 220px;
+      background-color: #147a34;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 40px;
+    }
+    .menu-item {
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    .menu-item.active {
+      border-left: 4px solid white;
+      padding-left: 10px;
+      font-weight: bold;
+    }
+    .profile {
+      margin-top: auto;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+    }
+    .logout {
+      margin-top: 10px;
+      background: white;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    .main {
+      flex-grow: 1;
+      padding: 30px;
+    }
+    .detail-card {
+      background-color: white;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .detail-card img {
+      width: 200px;
+      border-radius: 12px;
+    }
+    .detail-content {
+      flex-grow: 1;
+    }
+    .detail-content h3 {
+      margin: 0;
+    }
+    .detail-content p {
+      margin: 8px 0;
+    }
+    .tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .tag {
+      background: #eee;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    .start-btn {
+      margin-top: 40px;
+      display: block;
+      background: #147a34;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">Skillio</div>
+    <div class="menu-item" onclick="location.href='dashboard.html'">Dashboard</div>
+    <div class="menu-item active">Activities</div>
+    <div class="profile">
+      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span></div>
+      <button class="logout" onclick="logout()">↶ Log out</button>
+    </div>
+  </div>
+  <div class="main">
+    <h2>Activities</h2>
+    <div class="detail-card" id="detail">
+      <img src="illustration.png" alt="Activity" />
+      <div class="detail-content">
+        <h3 id="name">...</h3>
+        <p id="date">...</p>
+        <p id="desc">...</p>
+        <div class="tags" id="tags"></div>
+      </div>
+    </div>
+    <button class="start-btn" id="startBtn">Start the quiz</button>
+  </div>
+
+  <script type="module">
+    import { apiGet, apiPost } from './api.js';
+    import { logout } from './auth.js';
+    window.logout = logout;
+
+    const params = new URLSearchParams(window.location.search);
+    const activityId = params.get('activityId');
+
+    async function loadDetail() {
+      const res = await apiGet(`/activities/${activityId}`); // สมมุติ endpoint แบบ REST
+      document.getElementById('name').innerText = res.name;
+      document.getElementById('date').innerText = res.eventDate;
+      document.getElementById('desc').innerText = res.description;
+
+      const tagBox = document.getElementById('tags');
+      [...(res.hardSkills || []), ...(res.softSkills || [])].forEach(skill => {
+        const div = document.createElement('div');
+        div.className = 'tag';
+        div.innerText = skill;
+        tagBox.appendChild(div);
+      });
+    }
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      window.location.href = `quiz.html?activityId=${activityId}`;
+    });
+
+    loadDetail();
+  </script>
+</body>
+</html>
