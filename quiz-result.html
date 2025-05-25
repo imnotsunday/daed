@@ -149,7 +149,7 @@
 
     async function loadResult() {
       const detail = await apiGet(`/activities/${activityId}`);
-      const result = await apiGet(`/quiz-result?activityId=${activityId}`);
+      const result = await apiGet(`/quiz/result?activityId=${activityId}`);
 
       document.getElementById('name').innerText = detail.name;
       document.getElementById('date').innerText = detail.eventDate;
