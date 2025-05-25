@@ -52,7 +52,7 @@ def lambda_handler(event, context):
                     'activityId': {'S': activity_id},
                     'questionId': {'S': question_id},
                     'question': {'S': q['question']},
-                    'options': {'S': json.dumps(q['options'])},
+                    'options': {'L': [{'S': opt} for opt in q['options']]},  # ✅ แก้ตรงนี้
                     'correctAnswer': {'S': q['correctAnswer']},
                     'relatedSkill': {'S': q['relatedSkill']}
                 }

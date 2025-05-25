@@ -61,11 +61,14 @@ def lambda_handler(event, context):
             ExpressionAttributeValues={":aid": {"S": activity_id}}
         )
 
-        # ลบ correctAnswer ออกก่อนส่งกลับ
         items = []
         for item in result.get('Items', []):
-            question = {k: list(v.values())[0] for k, v in item.items()}
-            question.pop('correctAnswer', None)  # ❌ ลบคำตอบก่อนส่ง
+            question = {
+                'id': item['questionId']['S'],
+                'question': item['question']['S'],
+                'options': [opt['S'] for opt in item['options']['L']],  # ✅ แก้ตรงนี้ให้เป็น string array
+                'relatedSkill': item['relatedSkill']['S']
+            }
             items.append(question)
 
         return {

@@ -5,10 +5,17 @@ import hmac
 import hashlib
 import time
 import urllib.request
+import boto3  # ✅ เพิ่ม boto3
 
+# Environment variables
 TU_AUTH_API = 'https://restapi.tu.ac.th/api/v1/auth/Ad/verify2'
 APPLICATION_KEY = os.environ.get('TU_APP_KEY', '')
 SECRET = os.environ.get('JWT_SECRET', 'default-secret')
+TABLE_USERS = os.environ.get('TABLE_USERS', 'Users')  # ✅ เพิ่มชื่อ table
+
+# DynamoDB
+dynamodb = boto3.resource('dynamodb')
+users_table = dynamodb.Table(TABLE_USERS)
 
 def build_jwt(payload, secret):
     header = {"alg": "HS256", "typ": "JWT"}
@@ -28,7 +35,6 @@ def lambda_handler(event, context):
         if not username or not password:
             return {"statusCode": 400, "body": json.dumps({"message": "Missing credentials"})}
 
-        # ✅ ถ้า username == password และตรงกับ role เดโม่
         allowed_roles = ['admin', 'creator', 'advisor']
         if username == password and username in allowed_roles:
             payload = {
@@ -44,7 +50,7 @@ def lambda_handler(event, context):
                 "body": json.dumps({"token": token, "user": payload})
             }
 
-        # ✅ ถ้าไม่ใช่ demo → ลองเช็กกับ TU Auth API
+        # ✅ ตรวจสอบกับ TU Auth API
         req = urllib.request.Request(
             TU_AUTH_API,
             data=json.dumps({"UserName": username, "PassWord": password}).encode(),
@@ -65,6 +71,16 @@ def lambda_handler(event, context):
             "role": "student",
             "exp": int(time.time()) + 3600
         }
+
+        # ✅ เพิ่มผู้ใช้เข้า DynamoDB ถ้ายังไม่มี
+        existing = users_table.get_item(Key={'userId': username})
+        if 'Item' not in existing:
+            users_table.put_item(Item={
+                'userId': username,
+                'name': data['displayname_en'],
+                'role': 'student'
+            })
+
         token = build_jwt(payload, SECRET)
         return {
             "statusCode": 200,

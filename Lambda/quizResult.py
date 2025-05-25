@@ -10,7 +10,12 @@ dynamodb = boto3.resource('dynamodb')
 TABLE_NAME = os.environ['TABLE_SUBMISSIONS']
 JWT_SECRET = os.environ['JWT_SECRET']
 
-# 🔐 JWT decoder
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "GET,OPTIONS"
+}
+
 def decode_jwt(token, secret):
     try:
         parts = token.split('.')
@@ -30,7 +35,6 @@ def decode_jwt(token, secret):
     except:
         return None
 
-# 🛠 แปลง Decimal ให้กลายเป็น int/float
 def convert(obj):
     if isinstance(obj, Decimal):
         return int(obj) if obj % 1 == 0 else float(obj)
@@ -40,24 +44,30 @@ def convert(obj):
         return {k: convert(v) for k, v in obj.items()}
     return obj
 
-# 📡 Lambda handler
 def lambda_handler(event, context):
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': CORS_HEADERS,
+            'body': json.dumps({ 'message': 'CORS preflight' })
+        }
+
     headers = event.get('headers', {})
     token = headers.get('Authorization') or headers.get('authorization')
 
     if not token or not token.startswith('Bearer '):
         return {
             'statusCode': 401,
-            'body': json.dumps({ 'message': 'Missing or invalid token' }),
-            'headers': { 'Access-Control-Allow-Origin': '*' }
+            'headers': CORS_HEADERS,
+            'body': json.dumps({ 'message': 'Missing or invalid token' })
         }
 
     user = decode_jwt(token.replace('Bearer ', ''), JWT_SECRET)
     if not user:
         return {
             'statusCode': 403,
-            'body': json.dumps({ 'message': 'Invalid token' }),
-            'headers': { 'Access-Control-Allow-Origin': '*' }
+            'headers': CORS_HEADERS,
+            'body': json.dumps({ 'message': 'Invalid token' })
         }
 
     params = event.get('queryStringParameters') or {}
@@ -67,8 +77,8 @@ def lambda_handler(event, context):
     if not activity_id or not user_id:
         return {
             'statusCode': 400,
-            'body': json.dumps({ 'message': 'Missing activityId or userId' }),
-            'headers': { 'Access-Control-Allow-Origin': '*' }
+            'headers': CORS_HEADERS,
+            'body': json.dumps({ 'message': 'Missing activityId or userId' })
         }
 
     table = dynamodb.Table(TABLE_NAME)
@@ -83,25 +93,27 @@ def lambda_handler(event, context):
         if not item:
             return {
                 'statusCode': 404,
-                'body': json.dumps({ 'message': 'Result not found' }),
-                'headers': { 'Access-Control-Allow-Origin': '*' }
+                'headers': CORS_HEADERS,
+                'body': json.dumps({ 'message': 'Result not found' })
             }
 
         result = {
+            'name': item.get('activityName', 'Untitled'),
             'correct': item.get('score', 0),
             'total': item.get('total', 0),
-            'skills': json.loads(item.get('skills', '[]')) if isinstance(item.get('skills'), str) else item.get('skills', [])
+            'skills': json.loads(item.get('skills', '[]')) if isinstance(item.get('skills'), str) else item.get('skills', []),
+            'passed': item.get('passed', True)
         }
 
         return {
             'statusCode': 200,
-            'body': json.dumps(convert(result)),
-            'headers': { 'Access-Control-Allow-Origin': '*' }
+            'headers': CORS_HEADERS,
+            'body': json.dumps(convert(result))
         }
 
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps({ 'message': 'Server error', 'error': str(e) }),
-            'headers': { 'Access-Control-Allow-Origin': '*' }
+            'headers': CORS_HEADERS,
+            'body': json.dumps({ 'message': 'Server error', 'error': str(e) })
         }

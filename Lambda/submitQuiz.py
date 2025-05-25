@@ -13,6 +13,12 @@ TABLE_SUBMISSIONS = os.environ.get('TABLE_SUBMISSIONS', 'Submissions')
 TABLE_SKILLS = os.environ.get('TABLE_SKILLS', 'Skills')
 SECRET = os.environ.get('JWT_SECRET', 'default-secret')
 
+# ✅ Soft Skills ที่ได้ทันทีเมื่อส่ง
+SOFT_SKILLS_SET = set([
+    "Teamwork", "Communication", "Leadership", "Problem-solving",
+    "Humility", "Adaptability", "Creativity", "Innovation"
+])
+
 def decode_jwt(token, secret):
     try:
         parts = token.split('.')
@@ -62,13 +68,18 @@ def lambda_handler(event, context):
         for item in result.get('Items', []):
             question = {k: list(v.values())[0] for k, v in item.items()}
             qid = question['questionId']
-            total += 1
+            related_skill = question['relatedSkill']
+            is_soft = related_skill in SOFT_SKILLS_SET
             is_correct = qid in answers and answers[qid] == question['correctAnswer']
+            pass_status = is_soft or is_correct
+
+            total += 1
             if is_correct:
                 correct += 1
+
             skill_results.append({
-                "name": question['relatedSkill'],
-                "pass": is_correct
+                "name": related_skill,
+                "pass": pass_status
             })
 
         # 2. เก็บลง TABLE_SUBMISSIONS
