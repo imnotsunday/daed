@@ -148,7 +148,7 @@
     const activityId = params.get('activityId');
 
     async function loadResult() {
-      const detail = await apiGet(`/activity/${activityId}`);
+      const detail = await apiGet(`/activities/${activityId}`);
       const result = await apiGet(`/quiz-result?activityId=${activityId}`);
 
       document.getElementById('name').innerText = detail.name;
