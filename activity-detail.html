@@ -138,7 +138,7 @@
     const activityId = params.get('activityId');
 
     async function loadDetail() {
-      const res = await apiGet(`/activities/${activityId}`); // สมมุติ endpoint แบบ REST
+      const res = await apiGet(`/activity/${activityId}`); // สมมุติ endpoint แบบ REST
       document.getElementById('name').innerText = res.name;
       document.getElementById('date').innerText = res.eventDate;
       document.getElementById('desc').innerText = res.description;
