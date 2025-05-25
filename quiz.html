@@ -93,57 +93,62 @@
     </div>
   </div>
   <div class="main">
-  <h2>Quiz</h2>
-  <form id="quizForm"></form>
-  <button class="submit-btn" id="submitBtn">Submit</button>
-</div>
+    <h2>Quiz</h2>
+    <form id="quizForm"></form>
+    <button class="submit-btn" id="submitBtn">Submit</button>
+  </div>
 
-<script type="module">
-  import { apiGet, apiPost } from './api.js';
-  import { logout, getUserId } from './auth.js';
-  window.logout = logout;
+  <script type="module">
+    import { apiGet, apiPost } from './api.js';
+    import { logout, getUserId } from './auth.js';
+    window.logout = logout;
 
-  const params = new URLSearchParams(window.location.search);
-  const activityId = params.get('activityId');
+    const params = new URLSearchParams(window.location.search);
+    const activityId = params.get('activityId');
 
-  async function loadQuiz() {
-    const questions = await apiGet(`/quiz?activityId=${activityId}`);
-    const form = document.getElementById('quizForm');
-    form.innerHTML = '';
+    async function loadQuiz() {
+      const questions = await apiGet(`/quiz?activityId=${activityId}`);
+      const form = document.getElementById('quizForm');
+      form.innerHTML = '';
 
-    questions.forEach((q, index) => {
-      const div = document.createElement('div');
-      div.className = 'question-card';
-      div.innerHTML = `
-        <div class="question">${index + 1}. ${q.question}</div>
-        <div class="options">
-          ${q.options.map(opt => `
-            <label><input type="radio" name="q${q.id}" value="${opt}" required /> ${opt}</label>
-          `).join('')}
-        </div>
-      `;
-      form.appendChild(div);
-    });
-  }
+      const letters = ['A', 'B', 'C', 'D'];
 
-  document.getElementById('submitBtn').addEventListener('click', async () => {
-    const formData = new FormData(document.getElementById('quizForm'));
-    const answers = {};
-    for (let [key, value] of formData.entries()) {
-      if (!key.startsWith('q')) continue;
-      answers[key] = value;
+      questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.className = 'question-card';
+        const qid = q.questionId;
+
+        div.innerHTML = `
+          <div class="question">${index + 1}. ${q.question}</div>
+          <div class="options">
+            ${q.options.map((opt, i) => `
+              <label><input type="radio" name="q_${qid}" value="${letters[i]}" required /> ${letters[i]}. ${opt}</label>
+            `).join('')}
+          </div>
+        `;
+        form.appendChild(div);
+      });
     }
 
-    const res = await apiPost('/submit-quiz', {
-      activityId,
-      answers
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const formData = new FormData(document.getElementById('quizForm'));
+      const answers = {};
+      for (let [key, value] of formData.entries()) {
+        if (!key.startsWith('q_')) continue;
+        const qid = key.replace('q_', '');
+        answers[qid] = value;
+      }
+
+      const res = await apiPost('/submit-quiz', {
+        activityId,
+        answers
+      });
+
+      alert(res.message || 'Submitted!');
+      window.location.href = `quiz-result.html?activityId=${activityId}`;
     });
 
-    alert(res.message || 'Submitted!');
-    window.location.href = `quiz-result.html?activityId=${activityId}`;
-  });
-
-  loadQuiz();
-</script>
+    loadQuiz();
+  </script>
 </body>
 </html>

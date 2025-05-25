@@ -2,17 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Student Details - Skillio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - Skillio</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       height: 100vh;
-      background-color: #f5f5f5;
     }
     .sidebar {
       width: 220px;
@@ -23,104 +21,122 @@
       padding: 20px;
     }
     .logo {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: bold;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
     }
     .menu-item {
       font-size: 16px;
       margin: 10px 0;
       cursor: pointer;
     }
-    .menu-item.active {
-      border-left: 4px solid white;
-      padding-left: 10px;
-      font-weight: bold;
-    }
-    .profile {
-      margin-top: auto;
-      font-size: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: start;
-    }
-    .logout {
-      margin-top: 10px;
-      background: white;
-      color: #147a34;
-      border-radius: 20px;
-      padding: 5px 12px;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-    }
     .main {
       flex-grow: 1;
       padding: 30px;
+      overflow-y: auto;
+      background: #f5f5f5;
     }
-    .card {
-      background-color: white;
-      border-radius: 10px;
+    .profile-card {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 12px;
       padding: 20px;
       margin-bottom: 20px;
-    }
-    .card h3 {
-      margin: 0 0 10px;
-    }
-    .skills-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .legend-item {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 20px;
     }
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
+    .profile-icon {
+      font-size: 40px;
+    }
+    .profile-name {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .profile-id {
+      font-size: 14px;
+      color: #666;
+    }
+    h3 {
+      margin-bottom: 10px;
+    }
+    .badge {
+      display: inline-block;
+      background: #e0e0e0;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin: 5px 5px 5px 0;
+    }
+    .activity {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .activity h4 {
+      margin: 0;
+    }
+    .activity small {
+      color: #666;
+    }
+    .skill-charts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    .chart-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 400px;
+      height: 300px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     canvas {
-      max-width: 300px;
-      margin: 10px 0;
+      width: 250px !important;
+      height: 250px !important;
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <div class="logo">Skillio</div>
-    <div class="menu-item active">Dashboard</div>
-    <div class="menu-item" onclick="location.href='activities.html'">Activities</div>
-    <div class="profile">
-      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span></div>
-      <button class="logout" onclick="logout()">↶ Log out</button>
-    </div>
+    <div class="menu-item" onclick="location.href='advisor-dashboard.html'">⬅ Back</div>
+    <div class="menu-item" onclick="logout()">Log Out</div>
   </div>
-
   <div class="main">
-    <h2>Dashboard</h2>
-
-    <div class="card">
-      <h3>Total Activities</h3>
-      <div id="activityCount" style="font-size: 40px; font-weight: bold; color: #147a34;">Loading...</div>
-    </div>
-
-    <div class="card">
-      <h3>Your Acquired Skills</h3>
-      <div style="display: flex; gap: 60px; flex-wrap: wrap;">
-        <div>
-          <canvas id="softSkillChart"></canvas>
-          <div class="skills-legend" id="softSkillLegend"></div>
-        </div>
-        <div>
-          <canvas id="hardSkillChart"></canvas>
-          <div class="skills-legend" id="hardSkillLegend"></div>
-        </div>
+    <div class="profile-card">
+      <div class="profile-icon">👤</div>
+      <div>
+        <div class="profile-name" id="student-name">Student Name</div>
+        <div class="profile-id" id="student-id">ID</div>
+        <div><strong>Total Activities:</strong> <span id="activity-count"></span></div>
       </div>
     </div>
+
+    <h3>Soft Skills</h3>
+    <div id="soft-skills"></div>
+
+    <h3>Hard Skills</h3>
+    <div id="hard-skills"></div>
+
+    <h3>Acquired Skills</h3>
+    <div class="skill-charts">
+      <div class="chart-card">
+        <canvas id="softSkillChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <canvas id="hardSkillChart"></canvas>
+      </div>
+    </div>
+
+    <h3>Quiz Responses</h3>
+    <div id="activities"></div>
   </div>
 
   <script type="module">
@@ -128,50 +144,122 @@
     import { logout } from './auth.js';
     window.logout = logout;
 
-    const renderChart = (ctxId, dataObj, legendId) => {
-      const ctx = document.getElementById(ctxId);
-      new Chart(ctx, {
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentId = urlParams.get('studentId');
+
+    if (!studentId) {
+      alert("Missing studentId");
+    }
+
+    function renderChartWithFixedColors(canvasId, skills, isSoft) {
+      const colorMap = isSoft ? {
+        "Teamwork": "#4D7358",
+        "Communication": "#50A373",
+        "Problem-solving": "#A0C9B2",
+        "Adaptability": "#4D6DAD",
+        "Creativity": "#74A8DC",
+        "Leadership": "#7FA6DD",
+        "Humility": "#5DCAD5",
+        "Innovation": "#196760"
+      } : {
+        "Carpentry": "#6C4475",
+        "Graphic design": "#9A63B0",
+        "Economics": "#C7A0E5",
+        "Foreign languages": "#B7C8ED",
+        "Project management": "#5A83A3",
+        "Medicals": "#3C366B",
+        "Programming": "#2DB6BE"
+      };
+
+      const counts = {};
+      skills.forEach(skill => {
+        counts[skill] = (counts[skill] || 0) + 1;
+      });
+
+      const labels = Object.keys(counts);
+      const data = Object.values(counts);
+      const colors = labels.map(label => colorMap[label] || "#999");
+
+      new Chart(document.getElementById(canvasId), {
         type: 'doughnut',
         data: {
-          labels: Object.keys(dataObj),
-          datasets: [{
-            data: Object.values(dataObj),
-            backgroundColor: Object.keys(dataObj).map((_, i) =>
-              `hsl(${i * 40 % 360}, 70%, 60%)`
-            )
-          }]
+          labels,
+          datasets: [{ data, backgroundColor: colors }]
         },
         options: {
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                font: { size: 14 },
+                padding: 12
+              }
+            }
+          },
           cutout: '60%'
         }
       });
+    }
 
-      const legend = document.getElementById(legendId);
-      legend.innerHTML = '';
-      Object.entries(dataObj).forEach(([label, _], i) => {
-        const color = `hsl(${i * 40 % 360}, 70%, 60%)`;
-        const div = document.createElement('div');
-        div.className = 'legend-item';
-        div.innerHTML = `<span class="legend-color" style="background:${color}"></span> ${label}`;
-        legend.appendChild(div);
-      });
-    };
-
-    async function loadDashboard() {
+    async function loadStudentSummary() {
       try {
-        const data = await apiGet('/summary');
-        console.log(data);
-        document.getElementById('activityCount').innerText = data.totalActivities;
-        renderChart('softSkillChart', data.softSkills || {}, 'softSkillLegend');
-        renderChart('hardSkillChart', data.hardSkills || {}, 'hardSkillLegend');
+        const data = await apiGet('/student-summary?studentId=' + studentId);
+
+        document.getElementById("student-name").innerText = data.name;
+        document.getElementById("student-id").innerText = data.studentId;
+        document.getElementById("activity-count").innerText = data.totalActivities;
+
+        const softSkills = document.getElementById("soft-skills");
+        if (softSkills) {
+          data.softSkills.forEach(s => {
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.innerText = s;
+            softSkills.appendChild(badge);
+          });
+        }
+
+        const hardSkills = document.getElementById("hard-skills");
+        if (hardSkills) {
+          data.hardSkills.forEach(s => {
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.innerText = s;
+            hardSkills.appendChild(badge);
+          });
+        }
+
+        renderChartWithFixedColors('softSkillChart', data.softSkills || [], true);
+        renderChartWithFixedColors('hardSkillChart', data.hardSkills || [], false);
+
+        const actContainer = document.getElementById("activities");
+        if (actContainer) {
+          data.activities.forEach(a => {
+            const box = document.createElement("div");
+            box.className = "activity";
+
+            const skillList = (a.skills || [])
+              .map(skill => skill.name)
+              .filter(name => name)
+              .join(', ');
+
+            box.innerHTML = `
+              <h4>${a.name}</h4>
+              <small>Score: ${a.score}/${a.total}</small><br />
+              <small>Skills: ${skillList}</small><br />
+              ${a.proofUrl ? `<a href="${a.proofUrl}" target="_blank">View Proof</a>` : ''}
+            `;
+            actContainer.appendChild(box);
+          });
+        }
       } catch (e) {
-        alert('Failed to load dashboard data');
+        alert("Failed to load student details.");
         console.error(e);
       }
     }
 
-    loadDashboard();
+    loadStudentSummary();
   </script>
 </body>
 </html>

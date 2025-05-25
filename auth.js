@@ -47,3 +47,9 @@ export function logout() {
   localStorage.removeItem('token');
   window.location.href = 'login.html';
 }
+
+export function getUser() {
+  const token = getToken();
+  if (!token) return null;
+  return decodeToken(token);
+}

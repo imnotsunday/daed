@@ -48,9 +48,7 @@
       flex-grow: 1;
       padding: 30px;
     }
-    h2 {
-      margin-top: 0;
-    }
+    h2 { margin-top: 0; }
     form {
       background-color: white;
       padding: 20px;
@@ -61,7 +59,7 @@
       margin-top: 15px;
       font-weight: bold;
     }
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 8px;
       border-radius: 6px;
@@ -72,13 +70,22 @@
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      margin-top: 5px;
+      margin-top: 10px;
     }
-    .tag {
-      background: #e0e0e0;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 13px;
+    .skill-tag {
+      background: white;
+      border: 1px solid #147a34;
+      color: #147a34;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .skill-tag .remove {
+      cursor: pointer;
+      font-weight: bold;
     }
     .next-btn {
       margin-top: 25px;
@@ -114,31 +121,90 @@
       <textarea id="description" rows="4"></textarea>
 
       <label>Soft Skills</label>
-      <input type="text" id="softSkills" placeholder="Comma separated">
+      <select id="softSkillSelect">
+        <option value="">-- Select Soft Skill --</option>
+        <option>Teamwork</option>
+        <option>Communication</option>
+        <option>Problem-solving</option>
+        <option>Adaptability</option>
+        <option>Creativity</option>
+        <option>Leadership</option>
+        <option>Humility</option>
+        <option>Innovation</option>
+      </select>
+      <div class="skill-list" id="softSkillList"></div>
 
       <label>Hard Skills</label>
-      <input type="text" id="hardSkills" placeholder="Comma separated">
+      <select id="hardSkillSelect">
+        <option value="">-- Select Hard Skill --</option>
+        <option>Carpentry</option>
+        <option>Graphic design</option>
+        <option>Economics</option>
+        <option>Foreign languages</option>
+        <option>Project management</option>
+        <option>Medicals</option>
+        <option>Programming</option>
+      </select>
+      <div class="skill-list" id="hardSkillList"></div>
 
       <button class="next-btn" type="button" id="nextBtn">Next</button>
     </form>
   </div>
-  <script type="module">
-  import { storeTemp } from './api.js';
-  import { logout } from './auth.js';
-  window.logout = logout;
 
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    const payload = {
-      name: document.getElementById('name').value,
-      eventDate: document.getElementById('date').value,
-      description: document.getElementById('description').value,
-      softSkills: document.getElementById('softSkills').value.split(',').map(s => s.trim()).filter(Boolean),
-      hardSkills: document.getElementById('hardSkills').value.split(',').map(s => s.trim()).filter(Boolean)
-    };
+<script type="module">
+import { storeTemp } from './api.js';
+import { logout } from './auth.js';
+window.logout = logout;
 
-    storeTemp('new-activity', payload); // เก็บไว้ชั่วคราวเพื่อใช้ในหน้า quiz
-    window.location.href = 'new-activity-quiz.html';
+const softSkillList = [];
+const hardSkillList = [];
+
+const updateSkillList = (container, skills, listId) => {
+  const list = document.getElementById(listId);
+  list.innerHTML = '';
+  skills.forEach(skill => {
+    const tag = document.createElement('div');
+    tag.className = 'skill-tag';
+    tag.innerHTML = `${skill} <span class="remove" onclick="this.parentElement.remove(); ${listId}Array.splice(${listId}Array.indexOf('${skill}'),1)">+</span>`;
+    list.appendChild(tag);
   });
+};
+
+const addSkill = (selectId, skillsArray, listId) => {
+  const select = document.getElementById(selectId);
+  const skill = select.value;
+  if (skill && !skillsArray.includes(skill)) {
+    skillsArray.push(skill);
+    updateSkillList(document.getElementById(listId), skillsArray, listId);
+  }
+  select.value = '';
+};
+
+window.softSkillListArray = softSkillList;
+window.hardSkillListArray = hardSkillList;
+
+// Events
+['softSkillSelect', 'hardSkillSelect'].forEach((id) => {
+  document.getElementById(id).addEventListener('change', () => {
+    if (id === 'softSkillSelect') {
+      addSkill('softSkillSelect', softSkillList, 'softSkillList');
+    } else {
+      addSkill('hardSkillSelect', hardSkillList, 'hardSkillList');
+    }
+  });
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  const payload = {
+    name: document.getElementById('name').value,
+    eventDate: document.getElementById('date').value,
+    description: document.getElementById('description').value,
+    softSkills: softSkillList,
+    hardSkills: hardSkillList
+  };
+  storeTemp('new-activity', payload);
+  window.location.href = 'new-activity-quiz.html';
+});
 </script>
 </body>
 </html>

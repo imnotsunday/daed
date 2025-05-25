@@ -130,33 +130,46 @@
   </div>
 
   <script type="module">
-    import { apiGet, apiPost } from './api.js';
-    import { logout } from './auth.js';
-    window.logout = logout;
+  import { apiGet, apiPost } from './api.js';
+  import { logout } from './auth.js';
+  window.logout = logout;
 
-    const params = new URLSearchParams(window.location.search);
-    const activityId = params.get('activityId');
+  const params = new URLSearchParams(window.location.search);
+  const activityId = params.get('activityId');
 
-    async function loadDetail() {
-      const res = await apiGet(`/activity/${activityId}`); // สมมุติ endpoint แบบ REST
-      document.getElementById('name').innerText = res.name;
-      document.getElementById('date').innerText = res.eventDate;
-      document.getElementById('desc').innerText = res.description;
+  async function loadDetail() {
+    const res = await apiGet(`/activity/${activityId}`);
+    document.getElementById('name').innerText = res.name;
+    document.getElementById('date').innerText = res.eventDate;
+    document.getElementById('desc').innerText = res.description;
 
-      const tagBox = document.getElementById('tags');
-      [...(res.hardSkills || []), ...(res.softSkills || [])].forEach(skill => {
-        const div = document.createElement('div');
-        div.className = 'tag';
-        div.innerText = skill;
-        tagBox.appendChild(div);
-      });
+    // ✅ แปลง softSkills / hardSkills เป็น array หากยังเป็น string อยู่
+    let hardSkills = res.hardSkills;
+    let softSkills = res.softSkills;
+
+    try {
+      if (typeof hardSkills === 'string') hardSkills = JSON.parse(hardSkills);
+      if (typeof softSkills === 'string') softSkills = JSON.parse(softSkills);
+    } catch (e) {
+      hardSkills = [];
+      softSkills = [];
     }
 
-    document.getElementById('startBtn').addEventListener('click', () => {
-      window.location.href = `quiz.html?activityId=${activityId}`;
+    // ✅ สร้าง tag element
+    const tagBox = document.getElementById('tags');
+    [...(hardSkills || []), ...(softSkills || [])].forEach(skill => {
+      const div = document.createElement('div');
+      div.className = 'tag';
+      div.innerText = skill;
+      tagBox.appendChild(div);
     });
+  }
 
-    loadDetail();
-  </script>
+  document.getElementById('startBtn').addEventListener('click', () => {
+    window.location.href = `quiz.html?activityId=${activityId}`;
+  });
+
+  loadDetail();
+</script>
 </body>
 </html>

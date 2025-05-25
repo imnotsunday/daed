@@ -126,41 +126,53 @@
       container.innerHTML = '';
 
       activities.forEach(activity => {
-        const card = document.createElement('div');
-        card.className = 'activity-card';
+      // 🔧 แปลง JSON string -> array (ถ้าเก็บแบบ string มา)
+      let hardSkills = [];
+      let softSkills = [];
 
-        card.innerHTML = `
-          <img src="${activity.imageUrl || 'illustration.png'}" alt="activity" />
-          <div class="activity-content">
-            <h4>${activity.name}</h4>
-            <p>${activity.eventDate || 'TBA'}</p>
-            <p>${activity.description || ''}</p>
-            <div class="tags">
-              ${(activity.hardSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
-              ${(activity.softSkills || []).map(skill => '<div class="tag">' + skill + '</div>').join('')}
-            </div>
+      try {
+        hardSkills = typeof activity.hardSkills === 'string' ? JSON.parse(activity.hardSkills) : activity.hardSkills || [];
+      } catch { hardSkills = []; }
+
+      try {
+        softSkills = typeof activity.softSkills === 'string' ? JSON.parse(activity.softSkills) : activity.softSkills || [];
+      } catch { softSkills = []; }
+
+      const card = document.createElement('div');
+      card.className = 'activity-card';
+
+      card.innerHTML = `
+        <img src="${activity.imageUrl || 'illustration.png'}" alt="activity" />
+        <div class="activity-content">
+          <h4>${activity.name}</h4>
+          <p>${activity.eventDate || 'TBA'}</p>
+          <p>${activity.description || ''}</p>
+          <div class="tags">
+            ${hardSkills.map(skill => '<div class="tag">' + skill + '</div>').join('')}
+            ${softSkills.map(skill => '<div class="tag">' + skill + '</div>').join('')}
           </div>
-          <div class="action-btns">
-            <button class="approve">✔</button>
-            <button class="reject">✘</button>
-          </div>
-        `;
+        </div>
+        <div class="action-btns">
+          <button class="approve">✔</button>
+          <button class="reject">✘</button>
+        </div>
+      `;
 
-        const approveBtn = card.querySelector('.approve');
-        const rejectBtn = card.querySelector('.reject');
+      const approveBtn = card.querySelector('.approve');
+      const rejectBtn = card.querySelector('.reject');
 
-        approveBtn.onclick = async () => {
-          await apiPost('/approve-activity', { activityId: activity.activityId, status: 'approved' });
-          card.remove();
-        };
+      approveBtn.onclick = async () => {
+        await apiPost('/approve-activity', { activityId: activity.activityId, status: 'approved' });
+        card.remove();
+      };
 
-        rejectBtn.onclick = async () => {
-          await apiPost('/approve-activity', { activityId: activity.activityId, status: 'rejected' });
-          card.remove();
-        };
+      rejectBtn.onclick = async () => {
+        await apiPost('/approve-activity', { activityId: activity.activityId, status: 'rejected' });
+        card.remove();
+      };
 
-        container.appendChild(card);
-      });
+      container.appendChild(card);
+    });
     }
 
     loadPendingActivities();

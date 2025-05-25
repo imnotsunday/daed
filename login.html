@@ -5,106 +5,123 @@
   <title>Login - Skillio</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-    }
-
-    .container {
-      display: flex;
       height: 100vh;
-    }
-
-    .left-section {
-      width: 55%;
-      background-color: #e2f3e5;
-      position: relative;
+      background-color: #147a34;
       display: flex;
       justify-content: center;
       align-items: center;
+    }
+    .container {
+      background-color: #fff;
+      width: 90%;
+      max-width: 1200px;
+      height: 90vh;
+      display: flex;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .left-section {
+      width: 55%;
+      background-color: #d6f1df;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
       flex-direction: column;
     }
-
     .left-section .logo {
+      width: 110px;
       position: absolute;
       top: 30px;
       left: 40px;
-      font-size: 32px;
-      font-weight: bold;
-      color: #147a34;
-      font-family: 'Arial Black', sans-serif;
     }
-
     .illustration {
-      max-width: 80%;
+      width: 100%;
+      max-width: 480px;
       height: auto;
+      object-fit: contain;
     }
-
     .right-section {
       width: 45%;
       background-color: #ffffff;
       display: flex;
       justify-content: center;
       align-items: center;
-      position: relative;
-    }
-
-    .login-box {
-      width: 70%;
-      max-width: 300px;
-      display: flex;
       flex-direction: column;
     }
-
+    .login-box {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 40px;
+    }
     .login-box h2 {
-      margin-bottom: 20px;
-      font-size: 24px;
+      font-size: 32px;
       font-weight: bold;
+      margin-bottom: 10px;
     }
-
     .login-box label {
+      font-size: 16px;
       margin-bottom: 5px;
-      font-size: 14px;
     }
-
     .login-box input {
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #999;
-      border-radius: 20px;
+      padding: 14px 18px;
+      border: 1px solid #000;
+      border-radius: 28px;
+      font-size: 16px;
       outline: none;
     }
-
     .login-box button {
-      padding: 10px;
+      padding: 12px;
       background-color: white;
       border: 1px solid black;
-      border-radius: 20px;
-      cursor: pointer;
+      border-radius: 28px;
+      font-size: 16px;
       font-weight: bold;
+      cursor: pointer;
       transition: 0.2s;
     }
-
     .login-box button:hover {
       background-color: #147a34;
       color: white;
       border-color: #147a34;
     }
-
     #status {
-      margin-top: 10px;
       font-size: 14px;
       color: #d00;
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+      .left-section, .right-section {
+        width: 100%;
+        height: auto;
+      }
+      .left-section .logo {
+        position: static;
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="left-section">
-      <div class="logo">Skillio</div>
-      <img src="illustration.png" class="illustration" alt="Skillio Illustration" />
+      <img src="logo.png" class="logo" alt="Skillio Logo" />
+      <img src="illustration.png" alt="Skillio Illustration" class="illustration" />
     </div>
-
     <div class="right-section">
       <div class="login-box">
         <h2>Login</h2>
@@ -115,7 +132,7 @@
         <input type="password" id="password" placeholder="Enter password" />
 
         <button onclick="login()">Login</button>
-        <p id="status"></p>
+        <div id="status"></div>
       </div>
     </div>
   </div>
@@ -142,15 +159,15 @@
 
           if (res.user.role === "student") {
             window.location.href = "dashboard.html";
-            } else if (res.user.role === "creator") {
+          } else if (res.user.role === "creator") {
             window.location.href = "activities-organizer.html";
-            } else if (res.user.role === "admin") {
+          } else if (res.user.role === "admin") {
             window.location.href = "pending-activities.html";
-            } else if (res.user.role === "advisor") {
-            window.location.href = "advisor-dashboard.html"; // ✅ เพิ่มตรงนี้
-            } else {
+          } else if (res.user.role === "advisor") {
+            window.location.href = "advisor-dashboard.html";
+          } else {
             statusEl.innerText = "Unknown role.";
-            }
+          }
         } else {
           statusEl.innerText = res.message || "Login failed.";
         }
