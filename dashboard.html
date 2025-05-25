@@ -160,7 +160,7 @@
 
     async function loadDashboard() {
       try {
-        const data = await apiGet('/student-summary');
+        const data = await apiGet('/summary');
         document.getElementById('activityCount').innerText = data.totalActivities;
         renderChart('softSkillChart', data.softSkills || {}, 'softSkillLegend');
         renderChart('hardSkillChart', data.hardSkills || {}, 'hardSkillLegend');
