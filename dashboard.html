@@ -125,8 +125,9 @@
   </div>
 
   <script type="module">
-  import { logout, apiGet } from './auth.js';
-  window.logout = logout;
+  import { apiGet } from './api.js';
+  import { logout } from './auth.js';
+  window.logout = logout;;
 
   const renderChart = (ctxId, dataObj, legendId) => {
     const ctx = document.getElementById(ctxId);
