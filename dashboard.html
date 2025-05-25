@@ -6,9 +6,7 @@
   <title>Dashboard - Skillio</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -97,16 +95,17 @@
     <div class="menu-item active">Dashboard</div>
     <div class="menu-item" onclick="location.href='activities.html'">Activities</div>
     <div class="profile">
-      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span>
-      </div>
+      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span></div>
       <button class="logout" onclick="logout()">↶ Log out</button>
     </div>
   </div>
+
   <div class="main">
     <h2>Dashboard</h2>
+
     <div class="card">
       <h3>Total Activities</h3>
-      <div style="font-size: 40px; font-weight: bold; color: #147a34;">151</div>
+      <div id="activityCount" style="font-size: 40px; font-weight: bold; color: #147a34;">Loading...</div>
     </div>
 
     <div class="card">
@@ -125,56 +124,53 @@
   </div>
 
   <script type="module">
-  import { apiGet } from './api.js';
-  import { logout } from './auth.js';
-  window.logout = logout;;
+    import { apiGet } from './api.js';
+    import { logout } from './auth.js';
+    window.logout = logout;
 
-  const renderChart = (ctxId, dataObj, legendId) => {
-    const ctx = document.getElementById(ctxId);
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(dataObj),
-        datasets: [{
-          data: Object.values(dataObj),
-          backgroundColor: Object.keys(dataObj).map((_, i) =>
-            `hsl(${i * 40 % 360}, 70%, 60%)`
-          )
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        cutout: '60%'
+    const renderChart = (ctxId, dataObj, legendId) => {
+      const ctx = document.getElementById(ctxId);
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(dataObj),
+          datasets: [{
+            data: Object.values(dataObj),
+            backgroundColor: Object.keys(dataObj).map((_, i) =>
+              `hsl(${i * 40 % 360}, 70%, 60%)`
+            )
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          cutout: '60%'
+        }
+      });
+
+      const legend = document.getElementById(legendId);
+      legend.innerHTML = '';
+      Object.entries(dataObj).forEach(([label, _], i) => {
+        const color = `hsl(${i * 40 % 360}, 70%, 60%)`;
+        const div = document.createElement('div');
+        div.className = 'legend-item';
+        div.innerHTML = `<span class="legend-color" style="background:${color}"></span> ${label}`;
+        legend.appendChild(div);
+      });
+    };
+
+    async function loadDashboard() {
+      try {
+        const data = await apiGet('/student-summary');
+        document.getElementById('activityCount').innerText = data.totalActivities;
+        renderChart('softSkillChart', data.softSkills || {}, 'softSkillLegend');
+        renderChart('hardSkillChart', data.hardSkills || {}, 'hardSkillLegend');
+      } catch (e) {
+        alert('Failed to load dashboard data');
+        console.error(e);
       }
-    });
-
-    const legend = document.getElementById(legendId);
-    Object.entries(dataObj).forEach(([label, _], i) => {
-      const color = `hsl(${i * 40 % 360}, 70%, 60%)`;
-      const div = document.createElement('div');
-      div.className = 'legend-item';
-      div.innerHTML = `<span class="legend-color" style="background:${color}"></span> ${label}`;
-      legend.appendChild(div);
-    });
-  };
-
-  async function loadDashboard() {
-    try {
-      const data = await apiGet('/student-summary');
-
-      // Update total activity count
-      document.querySelector('.card h3 + div').innerText = data.totalActivities;
-
-      // Render charts
-      renderChart('softSkillChart', data.softSkills || {}, 'softSkillLegend');
-      renderChart('hardSkillChart', data.hardSkills || {}, 'hardSkillLegend');
-    } catch (e) {
-      alert('Failed to load dashboard data');
-      console.error(e);
     }
-  }
 
-  loadDashboard();
-</script>
+    loadDashboard();
+  </script>
 </body>
 </html>
