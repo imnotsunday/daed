@@ -9,15 +9,10 @@ import boto3
 # Init
 dynamodb = boto3.client('dynamodb')
 TABLE_QUIZ = os.environ.get('TABLE_QUIZ', 'QuizQuestions')
+TABLE_ACTIVITIES = os.environ.get('TABLE_ACTIVITIES', 'Activities')
 TABLE_SUBMISSIONS = os.environ.get('TABLE_SUBMISSIONS', 'Submissions')
 TABLE_SKILLS = os.environ.get('TABLE_SKILLS', 'Skills')
-SECRET = os.environ.get('JWT_SECRET', 'default-secret')
-
-# ✅ Soft Skills ที่ได้ทันทีเมื่อส่ง
-SOFT_SKILLS_SET = set([
-    "Teamwork", "Communication", "Leadership", "Problem-solving",
-    "Humility", "Adaptability", "Creativity", "Innovation"
-])
+SECRET = os.environ.get('JWT_SECRET', 'super-secret-key')
 
 def decode_jwt(token, secret):
     try:
@@ -35,26 +30,49 @@ def decode_jwt(token, secret):
     except:
         return None
 
+def flatten(item):
+    return {
+        k: v.get('S') or v.get('N') or v.get('BOOL') or None
+        for k, v in item.items()
+    }
+
 def lambda_handler(event, context):
     headers = event.get('headers', {})
     token = headers.get('Authorization') or headers.get('authorization')
     if not token or not token.startswith('Bearer '):
         return {"statusCode": 401, "body": json.dumps({"message": "Missing or invalid token"})}
-    
+
     token = token.replace('Bearer ', '')
     user = decode_jwt(token, SECRET)
     if not user or user.get('role') != 'student':
         return {"statusCode": 403, "body": json.dumps({"message": "Access denied"})}
-    
+
     try:
         body = json.loads(event.get('body', '{}'))
         activity_id = body.get('activityId')
-        answers = body.get('answers')  # answers = {"q1": "A", "q2": "B"}
+        answers = body.get('answers')
 
         if not activity_id or not answers:
             return {"statusCode": 400, "body": json.dumps({"message": "Missing activityId or answers"})}
 
-        # 1. ดึงคำถามทั้งหมดจาก activity นี้
+        # 1. ดึง soft skills จาก Activities
+        activity_data = dynamodb.get_item(
+            TableName=TABLE_ACTIVITIES,
+            Key={"activityId": {"S": activity_id}}
+        )
+        soft_skills = []
+        if 'Item' in activity_data:
+            raw_soft = activity_data['Item'].get('softSkills', {}).get('S', '[]')
+            try:
+                parsed = json.loads(raw_soft)
+                if isinstance(parsed, dict):
+                    soft_skills = list(parsed.keys())
+                elif isinstance(parsed, list):
+                    soft_skills = parsed
+            except:
+                soft_skills = []
+
+        # 2. ดึงคำถามทั้งหมดของ activity
         result = dynamodb.query(
             TableName=TABLE_QUIZ,
             KeyConditionExpression="activityId = :aid",
@@ -66,23 +84,29 @@ def lambda_handler(event, context):
         skill_results = []
 
         for item in result.get('Items', []):
-            question = {k: list(v.values())[0] for k, v in item.items()}
-            qid = question['questionId']
-            related_skill = question['relatedSkill']
-            is_soft = related_skill in SOFT_SKILLS_SET
-            is_correct = qid in answers and answers[qid] == question['correctAnswer']
-            pass_status = is_soft or is_correct
+            question = flatten(item)
+            qid = question.get('questionId')
+            related_skill = (question.get('relatedSkill') or '').strip()
+            correct_answer = question.get('correctAnswer')
 
+            is_correct = qid in answers and answers[qid] == correct_answer
             total += 1
             if is_correct:
                 correct += 1
 
             skill_results.append({
                 "name": related_skill,
-                "pass": pass_status
+                "pass": is_correct
             })
 
-        # 2. เก็บลง TABLE_SUBMISSIONS
+        # 3. เพิ่ม soft skill ทั้งหมดให้ pass
+        for soft in soft_skills:
+            skill_results.append({
+                "name": soft,
+                "pass": True
+            })
+
+        # 4. เก็บลง TABLE_SUBMISSIONS
         dynamodb.put_item(
             TableName=TABLE_SUBMISSIONS,
             Item={
@@ -96,7 +120,7 @@ def lambda_handler(event, context):
             }
         )
 
-        # 3. เพิ่ม skill ที่ผ่านเท่านั้นลง TABLE_SKILLS
+        # 5. เพิ่มเฉพาะ skill ที่ pass ลง TABLE_SKILLS
         for s in skill_results:
             if s["pass"]:
                 dynamodb.put_item(

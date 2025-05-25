@@ -110,10 +110,10 @@
     <div class="logo">Skillio</div>
     <div class="menu-item" onclick="location.href='dashboard.html'">Dashboard</div>
     <div class="menu-item active">Activities</div>
-    <div class="profile">
-      <div>👤 Sirigay Thirawitt<br/><span style="font-size:12px;">Student</span></div>
-      <button class="logout" onclick="logout()">↶ Log out</button>
-    </div>
+    <div class="profile" id="user-profile">
+    <div>👤 Loading...<br/><span style="font-size:12px;">Student</span></div>
+    <button class="logout" onclick="logout()">↶ Log out</button>
+  </div>
   </div>
   <div class="main">
     <h2>Activities</h2>
@@ -131,11 +131,21 @@
 
   <script type="module">
   import { apiGet, apiPost } from './api.js';
-  import { logout } from './auth.js';
+  import { logout, getUser } from './auth.js';
   window.logout = logout;
 
   const params = new URLSearchParams(window.location.search);
   const activityId = params.get('activityId');
+
+  async function loadUserProfile() {
+    const user = await getUser();
+    if (user && user.name) {
+      document.querySelector('.profile').innerHTML = `
+        <div>👤 ${user.name}<br/><span style="font-size:12px;">${user.role || 'Student'}</span></div>
+        <button class="logout" onclick="logout()">↶ Log out</button>
+      `;
+    }
+  }
 
   async function loadDetail() {
     const res = await apiGet(`/activity/${activityId}`);
@@ -143,7 +153,6 @@
     document.getElementById('date').innerText = res.eventDate;
     document.getElementById('desc').innerText = res.description;
 
-    // ✅ แปลง softSkills / hardSkills เป็น array หากยังเป็น string อยู่
     let hardSkills = res.hardSkills;
     let softSkills = res.softSkills;
 
@@ -155,7 +164,6 @@
       softSkills = [];
     }
 
-    // ✅ สร้าง tag element
     const tagBox = document.getElementById('tags');
     [...(hardSkills || []), ...(softSkills || [])].forEach(skill => {
       const div = document.createElement('div');
@@ -169,6 +177,7 @@
     window.location.href = `quiz.html?activityId=${activityId}`;
   });
 
+  loadUserProfile();
   loadDetail();
 </script>
 </body>

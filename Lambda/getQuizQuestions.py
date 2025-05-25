@@ -64,9 +64,9 @@ def lambda_handler(event, context):
         items = []
         for item in result.get('Items', []):
             question = {
-                'id': item['questionId']['S'],
+                'questionId': item['questionId']['S'],  # ✅ เปลี่ยนจาก 'id' → 'questionId'
                 'question': item['question']['S'],
-                'options': [opt['S'] for opt in item['options']['L']],  # ✅ แก้ตรงนี้ให้เป็น string array
+                'options': [opt['S'] for opt in item['options']['L']],
                 'relatedSkill': item['relatedSkill']['S']
             }
             items.append(question)

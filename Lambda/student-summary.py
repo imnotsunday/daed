@@ -6,24 +6,28 @@ import hmac
 import hashlib
 from boto3.dynamodb.conditions import Key
 
+# 🔐 Env vars
 SECRET = os.environ.get('JWT_SECRET', 'default-secret')
+TABLE_USERS = os.environ.get('TABLE_USERS', 'Users')
 TABLE_SKILLS = os.environ.get('TABLE_SKILLS', 'Skills')
 TABLE_SUBMISSIONS = os.environ.get('TABLE_SUBMISSIONS', 'Submissions')
 TABLE_ACTIVITIES = os.environ.get('TABLE_ACTIVITIES', 'Activities')
-TABLE_SUMMARY = os.environ.get('TABLE_SUMMARY', 'StudentSummary')
 
+# 🔗 DynamoDB
 ddb = boto3.resource('dynamodb')
+users_table = ddb.Table(TABLE_USERS)
 skills_table = ddb.Table(TABLE_SKILLS)
 subs_table = ddb.Table(TABLE_SUBMISSIONS)
 acts_table = ddb.Table(TABLE_ACTIVITIES)
-sum_table = ddb.Table(TABLE_SUMMARY)
 
+# 🌐 CORS headers
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type,Authorization",
     "Access-Control-Allow-Methods": "GET,OPTIONS"
 }
 
+# 🔐 JWT decode
 def decode_jwt(token, secret):
     try:
         parts = token.split('.')
@@ -41,6 +45,7 @@ def decode_jwt(token, secret):
         print("JWT decode error:", e)
         return None
 
+# 🚀 Main handler
 def lambda_handler(event, context):
     if event.get("httpMethod") == "OPTIONS":
         return {
@@ -63,15 +68,15 @@ def lambda_handler(event, context):
         return {"statusCode": 400, "headers": CORS_HEADERS, "body": json.dumps({"message": "Missing studentId"})}
 
     try:
-    
-        name = student_id
+        # ✅ Get student name from Users table
         try:
-            summary = sum_table.get_item(Key={'studentId': student_id}).get('Item', {})
-            name = summary.get('name', student_id)
-        except Exception as lookup_err:
-            print("Student summary lookup error:", str(lookup_err))
+            user_item = users_table.get_item(Key={'userId': student_id}).get('Item', {})
+            name = user_item.get('name', student_id)
+        except Exception as err:
+            print("Name lookup failed:", err)
+            name = student_id
 
-
+        # 🧠 Skill split
         soft, hard = [], []
         response = skills_table.query(
             IndexName='userId-index',
@@ -84,7 +89,7 @@ def lambda_handler(event, context):
             else:
                 hard.append(skill)
 
-        
+        # 📝 Submissions + activity info
         result = subs_table.query(
             IndexName='userId-index',
             KeyConditionExpression=Key('userId').eq(student_id)
@@ -93,12 +98,18 @@ def lambda_handler(event, context):
         for s in result.get('Items', []):
             act_id = s['activityId']
             act_info = acts_table.get_item(Key={'activityId': act_id}).get('Item', {})
+            skills_json = s.get('skills', '[]')
+            try:
+                parsed_skills = json.loads(skills_json)
+            except:
+                parsed_skills = []
+
             activities.append({
                 "activityId": act_id,
                 "name": act_info.get('name', ''),
                 "score": int(s.get('score', 0)),
                 "total": int(s.get('total', 10)),
-                "skills": json.loads(s.get('skills', '[]')),
+                "skills": parsed_skills,
                 "proofUrl": s.get('proofUrl', '')
             })
 
@@ -112,7 +123,7 @@ def lambda_handler(event, context):
                 "softSkills": soft,
                 "hardSkills": hard,
                 "activities": activities
-            })
+            }, ensure_ascii=False, default=str)
         }
 
     except Exception as e:

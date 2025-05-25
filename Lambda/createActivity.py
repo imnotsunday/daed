@@ -54,7 +54,7 @@ def lambda_handler(event, context):
 
         activity_id = str(uuid.uuid4())
 
-        # 1. Save activity to DynamoDB
+        # ✅ แปลง soft/hard skills เป็น JSON string ก่อนเก็บ
         dynamodb.put_item(
             TableName=TABLE_ACTIVITIES,
             Item={
@@ -64,8 +64,8 @@ def lambda_handler(event, context):
                 "eventDate": {"S": event_date},
                 "status": {"S": "pending"},
                 "createdBy": {"S": user["userId"]},
-                "softSkills": {"SS": soft_skills},
-                "hardSkills": {"SS": hard_skills}
+                "softSkills": {"S": json.dumps(soft_skills)},
+                "hardSkills": {"S": json.dumps(hard_skills)}
             }
         )
 

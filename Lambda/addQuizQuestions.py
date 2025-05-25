@@ -46,15 +46,17 @@ def lambda_handler(event, context):
     try:
         for q in questions:
             question_id = str(uuid.uuid4())
+            normalized_skill = q['relatedSkill'].strip().title()
+
             dynamodb.put_item(
                 TableName=TABLE,
                 Item={
                     'activityId': {'S': activity_id},
                     'questionId': {'S': question_id},
                     'question': {'S': q['question']},
-                    'options': {'L': [{'S': opt} for opt in q['options']]},  # ✅ แก้ตรงนี้
+                    'options': {'L': [{'S': opt} for opt in q['options']]},
                     'correctAnswer': {'S': q['correctAnswer']},
-                    'relatedSkill': {'S': q['relatedSkill']}
+                    'relatedSkill': {'S': normalized_skill}
                 }
             )
         return {
